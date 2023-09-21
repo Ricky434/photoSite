@@ -1,0 +1,40 @@
+{{define "nav"}}
+<nav>
+    <div>
+        <a href='/'>Home</a>
+         {{if .IsAuthenticated}}
+            <a href='/snippet/create'>Create snippet</a>
+        {{end}}
+    </div>
+    <div>
+        {{if .IsAuthenticated}}
+            <form action='/user/logout' method='POST'>
+                <!-- Include the CSRF token -->
+                <input type='hidden' name='csrf_token' value='{{.CSRFToken}}'>
+                <button>Logout</button>
+            </form>
+        {{else}}
+            <div>
+            <button onclick="loginPopup()">Login</button>
+            <form id="loginPopup" style="display:none" action="user/login" method="POST" novalidate>
+                <!-- Include the CSRF token -->
+                <input type='hidden' name='csrf_token' value='{{.CSRFToken}}'>
+                <div class="emailLogin">
+                    <label>Name:</label>
+                    <input type='name' name='name'>
+                </div>
+                <div class="passwordLogin">
+                    <label>Password:</label>
+                    <input type='password' name='password'>
+                </div>
+                <div>
+                    <input type='submit' value='Login'>
+                </div>
+            </form>
+            </div>
+            <a href='/user/signup'>Signup</a>
+        {{end}}
+    </div>
+</nav>
+{{end}}
+
