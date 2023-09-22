@@ -102,7 +102,7 @@ func (m *PhotoModel) GetAll(event *int32, filters data.Filters) ([]*Photo, data.
 	totalRecords := 0
 
 	for rows.Next() {
-		var photo *Photo
+		var photo Photo
 
 		err := rows.Scan(
 			&totalRecords,
@@ -117,7 +117,7 @@ func (m *PhotoModel) GetAll(event *int32, filters data.Filters) ([]*Photo, data.
 			return nil, data.Metadata{}, err
 		}
 
-		photos = append(photos, photo)
+		photos = append(photos, &photo)
 	}
 
 	if err = rows.Err(); err != nil {

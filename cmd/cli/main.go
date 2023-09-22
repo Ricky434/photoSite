@@ -12,9 +12,7 @@ import (
 )
 
 type config struct {
-	StaticDir  string
-	StorageDir string
-	DB         struct {
+	DB struct {
 		Dsn          string
 		MaxOpenConns int
 		MaxIdleConns int
@@ -27,9 +25,6 @@ func main() {
 
 	// Get configuration
 	optionsFs := flag.NewFlagSet("Options", flag.ExitOnError)
-	optionsFs.StringVar(&cfg.StaticDir, "static-dir", "./ui/static", "Path to static assets")
-	optionsFs.StringVar(&cfg.StorageDir, "storage-dir", "./storage", "Path to storage assets")
-
 	optionsFs.StringVar(&cfg.DB.Dsn, "db-dsn", "postgres://utentedb:password@localhost/sitoWow?sslmode=disable", "PostgreSQL DSN")
 	// Non so se sono utili
 	optionsFs.IntVar(&cfg.DB.MaxOpenConns, "db-max-open-conns", 25, "PostgreSQL max open connections")
@@ -38,6 +33,7 @@ func main() {
 
 	cmds := []Command{
 		newCreateEventCommand(),
+		newInsertPhotosCommand(),
 	}
 
 	// Find command, and its index in arguments list
