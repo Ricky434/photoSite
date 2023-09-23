@@ -11,6 +11,20 @@ var (
 	ErrRecordNotFound     = errors.New("record not found")
 	ErrEditConflict       = errors.New("edit conflict")
 	ErrInvalidCredentials = errors.New("invalid credentials")
+
+	ImageExtensions = []string{
+		".gif",
+		//== jpeg
+		".jpg",
+		".jpeg",
+		".jfif",
+		".pjpeg",
+		".pjp",
+		//==
+		".png",
+		".svg",
+		".webp",
+	}
 )
 
 type Models struct {

@@ -20,18 +20,22 @@ func (app *Application) Routes() http.Handler {
 	router.Handler(http.MethodGet, "/static/*filepath", http.StripPrefix("/static", fileServer))
 	router.HandlerFunc(http.MethodGet, "/healthcheck", app.healthcheck)
 
+	// PUBLIC
 	dynamic := alice.New(app.SessionManager.LoadAndSave, app.noSurf, app.authenticate)
 
-	router.Handler(http.MethodGet, "/", dynamic.ThenFunc(app.homePage))
 	router.Handler(http.MethodGet, "/user/login", dynamic.ThenFunc(app.userLoginPage))
 	router.Handler(http.MethodPost, "/user/login", dynamic.ThenFunc(app.userLoginPost))
-	//router.Handler(http.MethodGet, "/runs/:id", dynamic.ThenFunc(app.runView))
 
+	// LOGIN REQUIRED
 	protected := dynamic.Append(app.requireAuthentication)
 
-	router.Handler(http.MethodGet, "/storage/*filepath", protected.Then(http.StripPrefix("/storage", storageServer)))
+	// Added headers that allow files to be cached, after protected in order to overwrite the header authenticate sets
+	router.Handler(http.MethodGet, "/storage/*filepath", protected.Then(app.staticCacheHeaders(http.StripPrefix("/storage", storageServer))))
 
+	router.Handler(http.MethodGet, "/", protected.ThenFunc(app.homePage))
 	router.Handler(http.MethodPost, "/user/logout", protected.ThenFunc(app.userLogout))
+
+	// ADMIN
 	//TODO: Questi possono essere usati solo se utente e' loggato e con livello abbastanza alto, modificare middleware di conseguenza
 	router.Handler(http.MethodGet, "/user/create", dynamic.ThenFunc(app.userCreatePage))
 	router.Handler(http.MethodPost, "/user/create", dynamic.ThenFunc(app.userCreatePost))

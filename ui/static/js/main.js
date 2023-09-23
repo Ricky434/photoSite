@@ -15,3 +15,13 @@ for (var i = 0; i < navLinks.length; i++) {
 		break;
 	}
 }
+
+const scrollContainer = document.getElementsByClassName("grid");
+
+for (let element of scrollContainer) {
+    element.addEventListener("wheel", (evt) => {
+        evt.preventDefault();
+        scrollContainer.scrollLeft += evt.deltaY;
+    });
+};
+

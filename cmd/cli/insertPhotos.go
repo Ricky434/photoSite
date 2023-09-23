@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"path"
 	"sitoWow/internal/data/models"
+	"slices"
 	"strings"
 	"time"
 )
@@ -68,23 +69,26 @@ func (c *insertPhotosCommand) recursiveInsert(m *models.Models, photo_path strin
 		return nil
 	}
 
+	if !slices.Contains(models.ImageExtensions, strings.ToLower(path.Ext(photo_path))) {
+		fmt.Printf("Skipping invalid image: %s\n", photo_path)
+		return nil
+	}
+
 	return c.insertPhoto(m, photo_path)
 }
 
 func (c *insertPhotosCommand) insertPhoto(m *models.Models, photo_path string) error {
 	// Extract metadata from photo
-	//
 	var ExiftoolOut []struct {
-		Latitude  *latlon    `json:"GPSLatitude"`
-		Longitude *latlon    `json:"GPSLongitude"`
+		Latitude  *float32   `json:"GPSLatitude"`
+		Longitude *float32   `json:"GPSLongitude"`
 		TakenAt   *time.Time `json:"DateTimeOriginal"`
 	}
 
 	cmd := exec.Command(
 		"exiftool",
-		"-TAG", "-GPSLatitude", "-GPSLongitude", "-DateTimeOriginal",
+		"-TAG", "-GPSLatitude#", "-GPSLongitude#", "-DateTimeOriginal",
 		"-j",
-		"-c", "%+.9f",
 		"-d", "%Y-%m-%dT%H:%M:%SZ",
 		photo_path,
 	)
@@ -100,7 +104,6 @@ func (c *insertPhotosCommand) insertPhoto(m *models.Models, photo_path string) e
 	}
 
 	// Retrieve event id if event name provided
-	//
 	var eventID *int32
 
 	if c.event != "" {
@@ -116,13 +119,15 @@ func (c *insertPhotosCommand) insertPhoto(m *models.Models, photo_path string) e
 		eventID = &e
 	}
 
+	photoExtension := strings.ToLower(path.Ext(photo_path))
+
 	// Insert photo data in db
-	//
 	photo := &models.Photo{
 		TakenAt:   ExiftoolOut[0].TakenAt,
-		Latitude:  (*float32)(ExiftoolOut[0].Latitude),
-		Longitude: (*float32)(ExiftoolOut[0].Longitude),
+		Latitude:  ExiftoolOut[0].Latitude,
+		Longitude: ExiftoolOut[0].Longitude,
 		Event:     eventID,
+		Extension: photoExtension,
 	}
 
 	err = m.Photos.Insert(photo)
@@ -131,8 +136,6 @@ func (c *insertPhotosCommand) insertPhoto(m *models.Models, photo_path string) e
 	}
 
 	// Copy photo in storage
-	//
-
 	// Open photo
 	source, err := os.Open(photo_path)
 	if err != nil {
@@ -153,7 +156,7 @@ func (c *insertPhotosCommand) insertPhoto(m *models.Models, photo_path string) e
 
 	// Open destination
 	// Rischio di sovrascrivere? Dovrei preservare le estensioni?
-	destination, err := os.Create(path.Join(eventDir, fmt.Sprintf("%s%s", photo.ID, path.Ext(photo_path))))
+	destination, err := os.Create(path.Join(eventDir, fmt.Sprintf("%s%s", photo.ID, photoExtension)))
 	if err != nil {
 		m.Photos.Delete(photo.ID)
 		return err
@@ -182,30 +185,4 @@ func newInsertPhotosCommand() *insertPhotosCommand {
 	c.fs.StringVar(&c.storageDir, "storage-dir", "./storage/photos", "Photos storage directory")
 
 	return c
-}
-
-type latlon float32
-
-// Bad code
-func (l *latlon) UnmarshalJSON(data []byte) error {
-	if string(data) == "null" {
-		return nil
-	}
-
-	var value float32
-	trimmed := strings.Trim(string(data), "\"")
-
-	err := json.Unmarshal([]byte(trimmed[1:]), &value)
-	if err != nil {
-		return err
-	}
-
-	if trimmed[0] == '-' {
-		value = -(value)
-	} else if trimmed[0] != '+' {
-		return fmt.Errorf("wrong lat/lon formatting")
-	}
-
-	*l = latlon(value)
-	return nil
 }

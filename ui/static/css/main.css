@@ -1,29 +1,5 @@
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    font-size: 18px;
-    font-family: "Ubuntu Mono", monospace;
-}
-
-main {
-    margin-top: 54px;
-    margin-bottom: 54px;
-    min-height: calc(100vh - 345px);
-    overflow: auto;
-}
-
-a {
-    text-decoration: none;
-}
-
-nav {
-    border-bottom: 1px solid #E4E5E7;
-    padding-top: 17px;
-    padding-bottom: 15px;
-    background: #F7F9FA;
-    height: 60px;
-    color: #6A6C6F;
+body {
+    max-width: 80% !important;
 }
 
 nav a {
@@ -46,7 +22,7 @@ nav div:last-child a {
 }
 
 nav a.live {
-    color: #34495E;
+    color: var(--text-main);
     cursor: default;
 }
 
@@ -87,4 +63,32 @@ nav a.live:hover {
   background-clip: content-box;
   border: yellowgreen;
   border-style: solid;
+}
+
+.grid {
+    display: flex;
+    grid-template-columns: repeat(auto-fill, 200px);
+    grid-column-gap: 20px;
+    grid-row-gap: 20px;
+    overflow: auto;
+}
+
+.grid-item {
+  display: inline-grid;
+  box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+  transition: 0.3s;
+  border-radius: 20px; /* 5px rounded corners */
+}
+
+.grid-item:hover {
+  box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+}
+
+.label {
+  text-align: center;
+}
+
+.photo {
+    border-radius: 20px 20px 0 0;
+    max-width: 200px;
 }

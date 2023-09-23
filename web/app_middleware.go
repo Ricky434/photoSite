@@ -22,6 +22,14 @@ func (app *Application) secureHeaders(next http.Handler) http.Handler {
 	})
 }
 
+func (app *Application) staticCacheHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "max-age=86400")
+
+		next.ServeHTTP(w, r)
+	})
+}
+
 func (app *Application) logRequest(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		app.Logger.Info("request",
@@ -63,6 +71,13 @@ func (app *Application) requireAuthentication(next http.Handler) http.Handler {
 	})
 }
 
+func FailureFunction() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Printf("Request Failed. Reason: %v", nosurf.Reason(r))
+		http.Error(w, http.StatusText(nosurf.FailureCode), nosurf.FailureCode)
+	})
+}
+
 func (app *Application) noSurf(next http.Handler) http.Handler {
 	csrfHandler := nosurf.New(next)
 	csrfHandler.SetBaseCookie(http.Cookie{
@@ -70,6 +85,7 @@ func (app *Application) noSurf(next http.Handler) http.Handler {
 		Path:     "/",
 		Secure:   true,
 	})
+	csrfHandler.SetFailureHandler(FailureFunction())
 
 	return csrfHandler
 }
@@ -81,16 +97,19 @@ func (app *Application) authenticate(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
+		app.Logger.Info("authenticate1")
 
 		exists, err := app.Models.Users.Exists(id)
 		if err != nil {
 			app.serverError(w, r, err)
 		}
+		app.Logger.Info("authenticate2")
 
 		if exists {
 			ctx := context.WithValue(r.Context(), isAuthenticatedContextKey, true)
 			r = r.WithContext(ctx)
 		}
+		app.Logger.Info("authenticate3")
 
 		next.ServeHTTP(w, r)
 	})

@@ -1,7 +1,22 @@
 {{define "title"}}Home{{end}}
 
 {{define "main"}}
-    <h2>Latest Snippets</h2>
-        <p>There's nothing to see here... yet!</p>
+    <h2>Photos</h2>
+    <div class="event-list">
+        {{range $key, $element := .PhotosByEvent}}
+            <details open="">
+            <summary class="event-name">{{$key}}</summary>
+            <div class="grid">
+            {{range $element}}
+                <div class="grid-item">
+                <!-- Have to check for null event-->
+                    <img src="/storage/photos/{{if .EventName}}{{.EventName}}/{{end}}{{.ID}}{{.Extension}}" alt="immagine super wow" class="photo">
+                    <div class="label">{{.ID}}</div>
+                </div>
+            {{end}}
+            </div>
+            </details>
+        {{end}}
+    </div>
 {{end}}
 

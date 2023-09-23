@@ -5,6 +5,8 @@ import (
 	"io/fs"
 	"net/http"
 	"path/filepath"
+	"sitoWow/internal/data"
+	"sitoWow/internal/data/models"
 	"sitoWow/ui"
 
 	"github.com/justinas/nosurf"
@@ -15,6 +17,9 @@ type TemplateData struct {
 	Flash           string
 	IsAuthenticated bool
 	CSRFToken       string
+	Photo           *models.Photo
+	PhotosByEvent   map[string][]*models.Photo
+	Metadata        *data.Metadata
 }
 
 func NewTemplateCache() (map[string]*template.Template, error) {

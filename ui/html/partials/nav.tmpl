@@ -16,7 +16,7 @@
         {{else}}
             <div>
             <button onclick="loginPopup()">Login</button>
-            <form id="loginPopup" style="display:none" action="user/login" method="POST" novalidate>
+            <form id="loginPopup" style="display:none" action="/user/login" method="POST" novalidate>
                 <!-- Include the CSRF token -->
                 <input type='hidden' name='csrf_token' value='{{.CSRFToken}}'>
                 <div class="emailLogin">

@@ -12,6 +12,7 @@ type EventModelInterface interface {
 	Update(event *Event) error
 	Delete(id int) error
 	GetByName(name string) (*Event, error)
+	GetByID(id int) (*Event, error)
 	GetAll() ([]*Event, error)
 }
 
@@ -101,6 +102,7 @@ func (m *EventModel) Delete(id int) error {
 	return nil
 }
 
+// TODO: probabilmente conviene unire questo e byID in getall
 func (m *EventModel) GetByName(name string) (*Event, error) {
 	query := `
     SELECT id, name, day, version
@@ -114,6 +116,30 @@ func (m *EventModel) GetByName(name string) (*Event, error) {
 	var event Event
 
 	err := m.DB.QueryRowContext(ctx, query, name).Scan(&event.ID, &event.Name, &event.Date, &event.Version)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrRecordNotFound
+		}
+
+		return nil, err
+	}
+
+	return &event, nil
+}
+
+func (m *EventModel) GetByID(id int) (*Event, error) {
+	query := `
+    SELECT id, name, day, version
+    FROM events
+    WHERE id = $1
+    `
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var event Event
+
+	err := m.DB.QueryRowContext(ctx, query, id).Scan(&event.ID, &event.Name, &event.Date, &event.Version)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrRecordNotFound
