@@ -60,6 +60,7 @@ func main() {
 	sessionManager := scs.New()
 	sessionManager.Store = postgresstore.New(db)
 	sessionManager.Lifetime = 12 * time.Hour
+	// This means that cookies only work in https
 	sessionManager.Cookie.Secure = true
 
 	app := &web.Application{

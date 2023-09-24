@@ -16,12 +16,15 @@ for (var i = 0; i < navLinks.length; i++) {
 	}
 }
 
-const scrollContainer = document.getElementsByClassName("grid");
+var elements = document.getElementsByClassName("grid")
 
-for (let element of scrollContainer) {
-    element.addEventListener("wheel", (evt) => {
-        evt.preventDefault();
-        scrollContainer.scrollLeft += evt.deltaY;
+for (let i=0; i < elements.length; i++) {
+    elements[i].addEventListener('wheel', (event) => {
+        event.preventDefault();
+
+        elements[i].scrollBy({
+            left: event.deltaY < 0 ? -100 : 100,
+        });
     });
-};
+}
 

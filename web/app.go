@@ -2,6 +2,7 @@ package web
 
 import (
 	"context"
+	"crypto/tls"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -42,10 +43,15 @@ type Application struct {
 }
 
 func (app *Application) Serve() error {
+	tlsConfig := &tls.Config{
+		CurvePreferences: []tls.CurveID{tls.X25519, tls.CurveP256},
+	}
+
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", app.Config.Port),
 		ErrorLog:     slog.NewLogLogger(app.Logger.Handler(), slog.LevelError),
 		Handler:      app.Routes(),
+		TLSConfig:    tlsConfig,
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
@@ -73,7 +79,7 @@ func (app *Application) Serve() error {
 		"env", app.Config.Env,
 	)
 
-	err := srv.ListenAndServe()
+	err := srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
 	if !errors.Is(err, http.ErrServerClosed) {
 		return err
 	}
