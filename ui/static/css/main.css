@@ -67,7 +67,6 @@ nav a.live:hover {
 
 .grid {
     display: flex;
-    grid-template-columns: repeat(auto-fill, 200px);
     grid-column-gap: 20px;
     grid-row-gap: 20px;
     overflow: auto;
@@ -75,9 +74,13 @@ nav a.live:hover {
 
 .grid-item {
   display: inline-grid;
-  box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+  box-shadow: 0 4px 8px 4px rgba(0,0,0,0.2);
   transition: 0.3s;
-  border-radius: 20px; /* 5px rounded corners */
+  border-radius: 20px;
+  margin-bottom: 15px;
+  margin-top: 10px;
+  height: 50vh;
+  background: #1b242e;
 }
 
 .grid-item:hover {
