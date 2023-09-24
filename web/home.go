@@ -9,30 +9,37 @@ import (
 func (app *Application) homePage(w http.ResponseWriter, r *http.Request) {
 	tdata := app.newTemplateData(r)
 
-	filters := data.Filters{
+	filtersEvents := data.Filters{
 		Page:         1,
-		PageSize:     100,
-		Sort:         "taken_at",
-		SortSafelist: []string{"taken_at"},
-		//TODO: aggiungere groupby
+		PageSize:     1000,
+		Sort:         "day",
+		SortSafelist: []string{"day"},
 	}
 
-	photos, metadata, err := app.Models.Photos.GetAll(nil, filters)
+	events, err := app.Models.Events.GetAll(filtersEvents)
 	if err != nil {
 		app.serverError(w, r, err)
+		return
+	}
+	events = append(events, &models.Event{ID: -1}) // null event
+	tdata.Events = events
+
+	photos, err := app.Models.Photos.Summary(10)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
 	}
 
-	tdata.PhotosByEvent = make(map[string][]*models.Photo)
+	tdata.PhotosByEvent = make(map[int32][]*models.Photo)
 
+	// Since they are already ordered, they will remain ordered
 	for _, p := range photos {
-		if p.EventName != nil {
-			tdata.PhotosByEvent[*p.EventName] = append(tdata.PhotosByEvent[*p.EventName], p)
+		if p.Event != nil {
+			tdata.PhotosByEvent[*p.Event] = append(tdata.PhotosByEvent[*p.Event], p)
 		} else {
-			tdata.PhotosByEvent[""] = append(tdata.PhotosByEvent[""], p)
+			tdata.PhotosByEvent[-1] = append(tdata.PhotosByEvent[-1], p)
 		}
 	}
-
-	tdata.Metadata = &metadata
 
 	//controlla todo, eventi getall/id/name
 	app.render(w, r, http.StatusOK, "home.tmpl", tdata)

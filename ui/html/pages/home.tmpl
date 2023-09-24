@@ -3,19 +3,21 @@
 {{define "main"}}
     <h2>Photos</h2>
     <div class="event-list">
-        {{range $key, $element := .PhotosByEvent}}
-            <details open="">
-            <summary class="event-name">{{$key}}</summary>
-            <div class="grid">
-            {{range $element}}
-                <div class="grid-item">
-                <!-- Have to check for null event-->
-                    <img src="/storage/photos/{{if .EventName}}{{.EventName}}/{{end}}{{.ID}}{{.Extension}}" alt="immagine super wow" class="photo">
-                    <div class="label">{{.ID}}</div>
+        {{range $e := .Events}}
+            {{$photos := index $.PhotosByEvent $e.ID}}
+            {{if gt (len $photos) 0}}
+                <details open="">
+                <summary class="event-name">{{with $e.Name}}{{.}}{{else}}Senza gita{{end}}</summary>
+                <div class="content photo-flex">
+                {{range $photos}}
+                    <!-- Have to check for null event, /storage should not be hardcoded-->
+                    <a href="/photos/{{.FileName}}" style="display: contents;">
+                    <img src="/storage/thumbnails/{{if ne $e.ID -1}}{{$e.Name}}/{{end}}{{.FileName}}" alt="immagine super wow" class="photo"/>
+                    </a>
+                {{end}}
                 </div>
+                </details>
             {{end}}
-            </div>
-            </details>
         {{end}}
     </div>
 {{end}}

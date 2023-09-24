@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS photos (
-    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    id bigserial PRIMARY KEY,
     created_at timestamp(0) with time zone NOT NULL DEFAULT NOW(),
-    extension text NOT NULL,
+    file_name text UNIQUE NOT NULL,
     taken_at timestamp(0) with time zone,
     latitude float CHECK (latitude between -90 and 90),
     longitude float CHECK (longitude between -90 and 90),

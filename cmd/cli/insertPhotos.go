@@ -45,6 +45,24 @@ func (c *insertPhotosCommand) Run(db *sql.DB) error {
 	fmt.Println("flag:", c.storageDir)
 
 	m := models.New(db)
+
+	// Create photos and event directories if not present
+	photosDir := path.Join(c.storageDir, "photos", c.event)
+	if _, err := os.Stat(photosDir); errors.Is(err, os.ErrNotExist) {
+		err := os.MkdirAll(photosDir, os.ModePerm)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Create thumbnails directory if not present
+	thumbsDir := path.Join(c.storageDir, "thumbnails", c.event)
+	if _, err := os.Stat(thumbsDir); errors.Is(err, os.ErrNotExist) {
+		err := os.MkdirAll(thumbsDir, os.ModePerm)
+		if err != nil {
+			return err
+		}
+	}
 	return c.recursiveInsert(&m, c.path)
 }
 
@@ -119,15 +137,13 @@ func (c *insertPhotosCommand) insertPhoto(m *models.Models, photo_path string) e
 		eventID = &e
 	}
 
-	photoExtension := strings.ToLower(path.Ext(photo_path))
-
 	// Insert photo data in db
 	photo := &models.Photo{
+		FileName:  path.Base(photo_path),
 		TakenAt:   ExiftoolOut[0].TakenAt,
 		Latitude:  ExiftoolOut[0].Latitude,
 		Longitude: ExiftoolOut[0].Longitude,
 		Event:     eventID,
-		Extension: photoExtension,
 	}
 
 	err = m.Photos.Insert(photo)
@@ -145,9 +161,9 @@ func (c *insertPhotosCommand) insertPhoto(m *models.Models, photo_path string) e
 	defer source.Close()
 
 	// Create event directory if not exists
-	eventDir := path.Join(c.storageDir, c.event)
+	eventDir := path.Join(c.storageDir, "photos", c.event)
 	if _, err := os.Stat(eventDir); errors.Is(err, os.ErrNotExist) {
-		err := os.Mkdir(eventDir, os.ModePerm)
+		err := os.MkdirAll(eventDir, os.ModePerm)
 		if err != nil {
 			m.Photos.Delete(photo.ID)
 			return err
@@ -156,7 +172,7 @@ func (c *insertPhotosCommand) insertPhoto(m *models.Models, photo_path string) e
 
 	// Open destination
 	// Rischio di sovrascrivere? Dovrei preservare le estensioni?
-	destination, err := os.Create(path.Join(eventDir, fmt.Sprintf("%s%s", photo.ID, photoExtension)))
+	destination, err := os.Create(path.Join(eventDir, photo.FileName))
 	if err != nil {
 		m.Photos.Delete(photo.ID)
 		return err
@@ -166,6 +182,21 @@ func (c *insertPhotosCommand) insertPhoto(m *models.Models, photo_path string) e
 	_, err = io.Copy(destination, source)
 	if err != nil {
 		m.Photos.Delete(photo.ID)
+		return err
+	}
+
+	// Make thumbnail
+	magickCmd := exec.Command(
+		"magick", "mogrify", "-auto-orient", "-path", path.Join(c.storageDir, "thumbnails", c.event), "-thumbnail", "500x500",
+		photo_path,
+	)
+
+	_, err = magickCmd.Output()
+	if err != nil {
+		// Rollback
+		m.Photos.Delete(photo.ID)
+		destination.Close()
+		os.Remove(photo_path)
 		return err
 	}
 
@@ -182,7 +213,7 @@ func newInsertPhotosCommand() *insertPhotosCommand {
 	}
 	c.fs.StringVar(&c.path, "path", "", "Photos location (folder or single file)")
 	c.fs.StringVar(&c.event, "event", "", "Event name")
-	c.fs.StringVar(&c.storageDir, "storage-dir", "./storage/photos", "Photos storage directory")
+	c.fs.StringVar(&c.storageDir, "storage-dir", "./storage", "Photos storage directory")
 
 	return c
 }

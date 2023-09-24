@@ -18,8 +18,13 @@ type TemplateData struct {
 	IsAuthenticated bool
 	CSRFToken       string
 	Photo           *models.Photo
-	PhotosByEvent   map[string][]*models.Photo
+	PhotosByEvent   map[int32][]*models.Photo
+	Events          []*models.Event
 	Metadata        *data.Metadata
+}
+
+var functions = template.FuncMap{
+	"Deref": func(i *int32) int32 { return *i },
 }
 
 func NewTemplateCache() (map[string]*template.Template, error) {
@@ -39,7 +44,7 @@ func NewTemplateCache() (map[string]*template.Template, error) {
 			page,
 		}
 
-		ts, err := template.New(name).ParseFS(ui.Files, patterns...)
+		ts, err := template.New(name).Funcs(functions).ParseFS(ui.Files, patterns...)
 		if err != nil {
 			return nil, err
 		}

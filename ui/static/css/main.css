@@ -65,35 +65,31 @@ nav a.live:hover {
   border-style: solid;
 }
 
-.grid {
+.photo-flex {
     display: flex;
-    grid-column-gap: 20px;
-    grid-row-gap: 20px;
+    flex-direction: row;
+    flex-wrap:  nowrap;
+    gap: 20px;
     overflow: auto;
 }
 
-.grid-item {
+.photo {
   display: inline-grid;
   box-shadow: 0 4px 8px 4px rgba(0,0,0,0.2);
   transition: 0.3s;
   border-radius: 20px;
   margin-bottom: 15px;
   margin-top: 10px;
-  height: 50vh;
+  max-height: 30vh;
+  flex-grow:  1;
+  flex-basis:   auto;
   background: #1b242e;
 }
 
 .grid-item:hover {
-  box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+  box-shadow: 0 8px 16px 4px rgba(0,0,0,0.2);
 }
 
 .label {
   text-align: center;
-  max-width: 200px;
-}
-
-.photo {
-    border-radius: 20px 20px 0 0;
-    width: 200px;
-    max-width: 200px;
 }
