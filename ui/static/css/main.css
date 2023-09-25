@@ -1,5 +1,5 @@
 body {
-    max-width: 80% !important;
+    max-width: 80%;
 }
 
 nav a {
@@ -86,10 +86,12 @@ nav a.live:hover {
   background: #1b242e;
 }
 
-.grid-item:hover {
-  box-shadow: 0 8px 16px 4px rgba(0,0,0,0.2);
+.photo:hover {
+  box-shadow: 0 8px 16px 4px rgba(0,0,0,0.4);
 }
 
-.label {
-  text-align: center;
+@media (hover: none) or (pointer: coarse) { 
+    body {
+        max-width: 100% !important;
+    }
 }
