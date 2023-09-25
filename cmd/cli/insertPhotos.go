@@ -133,7 +133,7 @@ func (c *insertPhotosCommand) insertPhoto(m *models.Models, photo_path string) e
 			return err
 		}
 
-		e := int32(event.ID)
+		e := event.ID
 		eventID = &e
 	}
 

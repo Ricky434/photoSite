@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"sitoWow/internal/data"
 	"sitoWow/internal/data/models"
+	"sitoWow/internal/validator"
 	"sitoWow/ui"
 
 	"github.com/justinas/nosurf"
@@ -14,10 +15,13 @@ import (
 
 type TemplateData struct {
 	Form            any
+	Validator       *validator.Validator // use when you only need errors without a form (htmx)
 	Flash           string
 	IsAuthenticated bool
 	CSRFToken       string
+	Event           *models.Event
 	Photo           *models.Photo
+	Photos          []*models.Photo
 	PhotosByEvent   map[int32][]*models.Photo
 	Events          []*models.Event
 	Metadata        *data.Metadata
@@ -25,6 +29,7 @@ type TemplateData struct {
 
 var functions = template.FuncMap{
 	"Deref": func(i *int32) int32 { return *i },
+	"Add":   func(a, b int) int { return a + b },
 }
 
 func NewTemplateCache() (map[string]*template.Template, error) {

@@ -1,0 +1,11 @@
+{{if .Validator.NonFieldErrors}}
+    {{range .Validator.NonFieldErrors}}
+        <div class='error'>{{.}}</div>
+    {{end}}
+{{end}}
+
+{{if .Validator.FieldErrors}}
+    {{range $key, $value := .Validator.FieldErrors}}
+        <div class='error'>{{$key}}: {{$value}}</div>
+    {{end}}
+{{end}}

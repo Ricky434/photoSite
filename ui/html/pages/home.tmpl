@@ -7,7 +7,7 @@
             {{$photos := index $.PhotosByEvent $e.ID}}
             {{if gt (len $photos) 0}}
                 <details open="">
-                <summary class="event-name">{{with $e.Name}}{{.}}{{else}}Senza gita{{end}}</summary>
+                <summary class="event-name">{{with $e.Name}}{{.}}{{else}}Senza gita{{end}}<a href="/events/view/{{$e.Name}}" class="event-link">Altre foto ></a></summary>
                 <div class="content photo-flex">
                 {{range $photos}}
                     <!-- Have to check for null event, /storage should not be hardcoded-->

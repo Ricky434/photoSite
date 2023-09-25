@@ -20,6 +20,13 @@ func (app *Application) serverError(w http.ResponseWriter, r *http.Request, err 
 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 
+// Like server error, but with code 200 so that htmx can show it
+func (app *Application) serverErrorHTMX(w http.ResponseWriter, r *http.Request, err error) {
+	app.logError(r, err)
+
+	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusOK)
+}
+
 // This is for when we don't need to log the error, since it is caused by the client
 func (app *Application) clientError(w http.ResponseWriter, r *http.Request, status int, err error) {
 	http.Error(w, http.StatusText(status), status)

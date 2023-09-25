@@ -2,6 +2,12 @@ body {
     max-width: 80%;
 }
 
+@media (hover: none) or (pointer: coarse) { 
+    body {
+        max-width: 100% !important;
+    }
+}
+
 nav a {
     margin-right: 1.5em;
     display: inline-block;
@@ -69,7 +75,9 @@ nav a.live:hover {
     display: flex;
     flex-direction: row;
     flex-wrap:  nowrap;
-    gap: 20px;
+    padding-top: 10px;
+    padding-bottom: 15px;
+    gap: 15px;
     overflow: auto;
 }
 
@@ -78,10 +86,7 @@ nav a.live:hover {
   box-shadow: 0 4px 8px 4px rgba(0,0,0,0.2);
   transition: 0.3s;
   border-radius: 20px;
-  margin-bottom: 15px;
-  margin-top: 10px;
   max-height: 30vh;
-  flex-grow:  1;
   flex-basis:   auto;
   background: #1b242e;
 }
@@ -90,8 +95,18 @@ nav a.live:hover {
   box-shadow: 0 8px 16px 4px rgba(0,0,0,0.4);
 }
 
-@media (hover: none) or (pointer: coarse) { 
-    body {
-        max-width: 100% !important;
-    }
+summary:focus, summary:hover {
+  text-decoration: none;
+}
+
+.event-link {
+    padding: inherit;
+}
+
+.photo-grid {
+    display: flex;
+    flex-wrap:  wrap;
+    flex-direction: row;
+    gap: 10px;
+    /*justify-content: space-between; /*non so se e' meglio cosi o altro*/
 }
