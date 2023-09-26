@@ -1,14 +1,8 @@
 {{define "title"}}Event{{end}} <!--Da cambiare-->
 
 {{define "main"}}
-    {{if .Event}}
     <h2>{{.Event.Name}}</h2>
     <span>{{with .Event.Date}}{{.}}{{else}}Nessuna data{{end}}</span>
     <div class="photo-grid" hx-swap="innerHTML" hx-get="/photoList?event={{.Event.ID}}" hx-trigger="revealed"> <!-- htmx -->
     </div>
-    {{else}}
-    <h2>Senza evento</h2>
-    <div class="photo-grid" hx-swap="innerHTML" hx-get="/photoList" hx-trigger="revealed"> <!-- htmx -->
-    </div>
-    {{end}}
 {{end}}

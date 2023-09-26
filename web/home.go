@@ -21,7 +21,6 @@ func (app *Application) homePage(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, r, err)
 		return
 	}
-	events = append(events, &models.Event{ID: -1}) // null event
 	tdata.Events = events
 
 	photos, err := app.Models.Photos.Summary(10)
@@ -30,17 +29,12 @@ func (app *Application) homePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tdata.PhotosByEvent = make(map[int32][]*models.Photo)
+	tdata.PhotosByEvent = make(map[int][]*models.Photo)
 
 	// Since they are already ordered, they will remain ordered
 	for _, p := range photos {
-		if p.Event != nil {
-			tdata.PhotosByEvent[*p.Event] = append(tdata.PhotosByEvent[*p.Event], p)
-		} else {
-			tdata.PhotosByEvent[-1] = append(tdata.PhotosByEvent[-1], p)
-		}
+		tdata.PhotosByEvent[p.Event] = append(tdata.PhotosByEvent[p.Event], p)
 	}
 
-	//controlla todo, eventi getall/id/name
 	app.render(w, r, http.StatusOK, "home.tmpl", tdata)
 }

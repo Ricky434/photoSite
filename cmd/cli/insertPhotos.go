@@ -29,11 +29,11 @@ func (c *insertPhotosCommand) Init(args []string) error {
 		return err
 	}
 
-	if c.path == "" || c.storageDir == "" {
+	if c.event == "" || c.path == "" || c.storageDir == "" {
 		c.fs.Usage()
 		fmt.Println()
 
-		return errors.New("No photos or storage path provided")
+		return errors.New("Not enough arguments provided")
 	}
 
 	return nil
@@ -121,21 +121,16 @@ func (c *insertPhotosCommand) insertPhoto(m *models.Models, photo_path string) e
 		return err
 	}
 
-	// Retrieve event id if event name provided
-	var eventID *int32
-
-	if c.event != "" {
-		event, err := m.Events.GetByName(c.event)
-		if err != nil {
-			if errors.Is(err, models.ErrRecordNotFound) {
-				return fmt.Errorf("Event does not exist")
-			}
-			return err
+	// Retrieve event id
+	event, err := m.Events.GetByName(c.event)
+	if err != nil {
+		if errors.Is(err, models.ErrRecordNotFound) {
+			return fmt.Errorf("Event does not exist")
 		}
-
-		e := event.ID
-		eventID = &e
+		return err
 	}
+
+	eventID := event.ID
 
 	// Insert photo data in db
 	photo := &models.Photo{
@@ -160,18 +155,9 @@ func (c *insertPhotosCommand) insertPhoto(m *models.Models, photo_path string) e
 	}
 	defer source.Close()
 
-	// Create event directory if not exists
 	eventDir := path.Join(c.storageDir, "photos", c.event)
-	if _, err := os.Stat(eventDir); errors.Is(err, os.ErrNotExist) {
-		err := os.MkdirAll(eventDir, os.ModePerm)
-		if err != nil {
-			m.Photos.Delete(photo.ID)
-			return err
-		}
-	}
 
 	// Open destination
-	// Rischio di sovrascrivere? Dovrei preservare le estensioni?
 	destination, err := os.Create(path.Join(eventDir, photo.FileName))
 	if err != nil {
 		m.Photos.Delete(photo.ID)
@@ -187,7 +173,10 @@ func (c *insertPhotosCommand) insertPhoto(m *models.Models, photo_path string) e
 
 	// Make thumbnail
 	magickCmd := exec.Command(
-		"magick", "mogrify", "-auto-orient", "-path", path.Join(c.storageDir, "thumbnails", c.event), "-thumbnail", "500x500",
+		"magick", "mogrify",
+		"-auto-orient",
+		"-path", path.Join(c.storageDir, "thumbnails", c.event),
+		"-thumbnail", "500x500",
 		photo_path,
 	)
 

@@ -14,7 +14,7 @@ type EventModelInterface interface {
 	Update(event *Event) error
 	Delete(id int) error
 	GetByName(name string) (*Event, error)
-	GetByID(id int32) (*Event, error)
+	GetByID(id int) (*Event, error)
 	GetAll(filters data.Filters) ([]*Event, error)
 }
 
@@ -23,7 +23,7 @@ type EventModel struct {
 }
 
 type Event struct {
-	ID      int32
+	ID      int
 	Name    string
 	Date    *time.Time
 	Version int
@@ -129,7 +129,7 @@ func (m *EventModel) GetByName(name string) (*Event, error) {
 	return &event, nil
 }
 
-func (m *EventModel) GetByID(id int32) (*Event, error) {
+func (m *EventModel) GetByID(id int) (*Event, error) {
 	query := `
     SELECT id, name, day, version
     FROM events

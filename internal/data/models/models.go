@@ -43,12 +43,12 @@ func New(db *sql.DB) Models {
 
 // DA SPOSTARE
 
-func newNullInt(n *int32) sql.NullInt32 {
+func newNullInt(n *int) sql.NullInt64 {
 	if n == nil {
-		return sql.NullInt32{}
+		return sql.NullInt64{}
 	}
-	return sql.NullInt32{
-		Int32: *n,
+	return sql.NullInt64{
+		Int64: int64(*n),
 		Valid: true,
 	}
 }

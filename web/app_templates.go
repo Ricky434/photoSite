@@ -22,14 +22,13 @@ type TemplateData struct {
 	Event           *models.Event
 	Photo           *models.Photo
 	Photos          []*models.Photo
-	PhotosByEvent   map[int32][]*models.Photo
+	PhotosByEvent   map[int][]*models.Photo
 	Events          []*models.Event
 	Metadata        *data.Metadata
 }
 
 var functions = template.FuncMap{
-	"Deref": func(i *int32) int32 { return *i },
-	"Add":   func(a, b int) int { return a + b },
+	"Add": func(a, b int) int { return a + b },
 }
 
 func NewTemplateCache() (map[string]*template.Template, error) {

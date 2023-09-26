@@ -8,7 +8,7 @@ import (
 
 func (app *Application) photoList(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		Event int32
+		Event int
 		data.Filters
 	}
 
@@ -16,7 +16,7 @@ func (app *Application) photoList(w http.ResponseWriter, r *http.Request) {
 
 	qs := r.URL.Query()
 
-	input.Event = int32(app.readInt(qs, "event", 0, v))
+	input.Event = app.readInt(qs, "event", 1, v)
 	input.Filters.Page = app.readInt(qs, "page", 1, v)
 	input.Filters.PageSize = app.readInt(qs, "page_size", 10, v)
 	input.Filters.Sort = app.readString(qs, "sort", "taken_at")

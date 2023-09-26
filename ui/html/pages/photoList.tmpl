@@ -3,7 +3,7 @@
     {{range .Photos}}
         <!-- /storage should not be hardcoded-->
         <a href="/photos/{{.FileName}}" style="display: contents;">
-        <img src="/storage/thumbnails/{{if .Event}}{{$.Event.Name}}/{{end}}{{.FileName}}" alt="immagine super wow" class="photo"/>
+        <img src="/storage/thumbnails/{{$.Event.Name}}/{{.FileName}}" alt="immagine super wow" class="photo"/>
         </a>
     {{end}}
     {{if lt .Metadata.CurrentPage .Metadata.LastPage}}

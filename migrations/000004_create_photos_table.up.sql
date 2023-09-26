@@ -5,7 +5,9 @@ CREATE TABLE IF NOT EXISTS photos (
     taken_at timestamp(0) with time zone,
     latitude float CHECK (latitude between -90 and 90),
     longitude float CHECK (longitude between -90 and 90),
-    CONSTRAINT valid_coords CHECK ((latitude is not null and longitude is not null) or (latitude is null and longitude is null))
+    event int NOT NULL,
+    CONSTRAINT valid_coords CHECK ((latitude is not null and longitude is not null) or (latitude is null and longitude is null)),
+    CONSTRAINT fk_event_id FOREIGN KEY(event) REFERENCES events(id)
 );
 
 CREATE INDEX IF NOT EXISTS index_date ON photos (taken_at NULLS LAST);
