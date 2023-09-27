@@ -1,0 +1,18 @@
+{{define "title"}}Photo{{end}} <!--Da cambiare-->
+
+{{define "main"}}
+    <img src="/storage/photos/{{.Event.Name}}/{{.Photo.FileName}}" alt="immagine super wow" class="FullPhoto"/>
+
+    <div class="photoInfo">
+        <span class="infoItem">Gita: {{.Event.Name}}</span>
+        {{with .Photo.TakenAt}}
+        <span class="infoItem">Scattata il: {{.}}</span>
+        {{end}}
+        {{with .Photo.Latitude}}
+        <span class="infoItem">Latitudine: {{.}}</span>
+        {{end}}
+        {{with .Photo.Longitude}}
+        <span class="infoItem">Longitudine: {{.}}</span>
+        {{end}}
+    </div>
+{{end}}

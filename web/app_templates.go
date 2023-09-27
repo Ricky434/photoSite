@@ -20,10 +20,10 @@ type TemplateData struct {
 	IsAuthenticated bool
 	CSRFToken       string
 	Event           *models.Event
+	Events          []*models.Event
 	Photo           *models.Photo
 	Photos          []*models.Photo
 	PhotosByEvent   map[int][]*models.Photo
-	Events          []*models.Event
 	Metadata        *data.Metadata
 }
 

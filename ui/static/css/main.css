@@ -110,3 +110,11 @@ summary:focus, summary:hover {
     gap: 10px;
     /*justify-content: space-between; /*non so se e' meglio cosi o altro*/
 }
+
+.FullPhoto {
+    max-height: 80vh;
+    max-width: 80vw;
+    margin-left: 5vw;
+    margin-bottom: 50px; 
+    display: block;
+}

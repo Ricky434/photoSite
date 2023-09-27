@@ -11,7 +11,7 @@
                 <div class="content photo-flex">
                 {{range $photos}}
                     <!-- Have to check for null event, /storage should not be hardcoded-->
-                    <a href="/photos/{{.FileName}}" style="display: contents;">
+                    <a href="/photos/view/{{.FileName}}" style="display: contents;">
                     <img src="/storage/thumbnails/{{$e.Name}}/{{.FileName}}" alt="immagine super wow" class="photo"/>
                     </a>
                 {{end}}

@@ -6,6 +6,8 @@ import (
 	"sitoWow/internal/data"
 	"sitoWow/internal/data/models"
 	"sitoWow/internal/validator"
+
+	"github.com/julienschmidt/httprouter"
 )
 
 func (app *Application) photoList(w http.ResponseWriter, r *http.Request) {
@@ -41,7 +43,7 @@ func (app *Application) photoList(w http.ResponseWriter, r *http.Request) {
 	event, err := app.Models.Events.GetByID(input.Event)
 	if err != nil {
 		if errors.Is(err, models.ErrRecordNotFound) {
-			app.clientErrorHTMX(w, r, http.StatusNotFound)
+			app.clientErrorHTMX(w, http.StatusNotFound)
 			return
 		}
 
@@ -64,4 +66,34 @@ func (app *Application) photoList(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) photoPage(w http.ResponseWriter, r *http.Request) {
+	params := httprouter.ParamsFromContext(r.Context())
+
+	file := params.ByName("file")
+
+	photo, err := app.Models.Photos.GetByFile(file)
+	if err != nil {
+		if errors.Is(err, models.ErrRecordNotFound) {
+			app.clientError(w, http.StatusNotFound)
+			return
+		}
+
+		app.serverError(w, r, err)
+	}
+
+	event, err := app.Models.Events.GetByID(photo.Event)
+	if err != nil {
+		// This should never happen thanks to db foreign key
+		if errors.Is(err, models.ErrRecordNotFound) {
+			app.clientError(w, http.StatusNotFound)
+			return
+		}
+
+		app.serverError(w, r, err)
+	}
+
+	tdata := app.newTemplateData(r)
+	tdata.Photo = photo
+	tdata.Event = event
+
+	app.render(w, r, http.StatusOK, "photo.tmpl", tdata)
 }

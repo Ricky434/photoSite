@@ -28,11 +28,11 @@ func (app *Application) serverErrorHTMX(w http.ResponseWriter, r *http.Request, 
 }
 
 // This is for when we don't need to log the error, since it is caused by the client
-func (app *Application) clientError(w http.ResponseWriter, r *http.Request, status int) {
+func (app *Application) clientError(w http.ResponseWriter, status int) {
 	http.Error(w, http.StatusText(status), status)
 }
 
 // Like server error, but with code 200 so that htmx can show it
-func (app *Application) clientErrorHTMX(w http.ResponseWriter, r *http.Request, status int) {
+func (app *Application) clientErrorHTMX(w http.ResponseWriter, status int) {
 	http.Error(w, http.StatusText(status), http.StatusOK)
 }

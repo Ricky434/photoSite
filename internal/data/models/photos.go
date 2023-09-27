@@ -3,6 +3,7 @@ package models
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"sitoWow/internal/data"
 	"time"
@@ -11,6 +12,7 @@ import (
 type PhotoModelInterface interface {
 	Insert(photo *Photo) error
 	Delete(id int) error
+	GetByFile(file string) (*Photo, error)
 	GetAll(event *int, filters data.Filters) ([]*Photo, data.Metadata, error)
 	Summary(n int) ([]*Photo, error)
 }
@@ -78,6 +80,36 @@ func (m *PhotoModel) Delete(id int) error {
 	}
 
 	return nil
+}
+
+func (m *PhotoModel) GetByFile(file string) (*Photo, error) {
+	query := `
+    SELECT id, file_name, created_at, taken_at, latitude, longitude, event
+    FROM photos
+    WHERE file_name = $1
+    `
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var photo Photo
+	err := m.DB.QueryRowContext(ctx, query, file).Scan(
+		&photo.ID,
+		&photo.FileName,
+		&photo.CreatedAt,
+		&photo.TakenAt,
+		&photo.Latitude,
+		&photo.Longitude,
+		&photo.Event,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrRecordNotFound
+		}
+		return nil, err
+	}
+
+	return &photo, nil
 }
 
 func (m *PhotoModel) GetAll(event *int, filters data.Filters) ([]*Photo, data.Metadata, error) {
