@@ -1,7 +1,7 @@
 {{define "title"}}Signup{{end}}
 
 {{define "main"}}
-<form action='/user/signup' method='POST' novalidate>
+<form action='/user/create' method='POST' novalidate>
     <!-- Include the CSRF token -->
     <input type='hidden' name='csrf_token' value='{{.CSRFToken}}'>
     <div>
@@ -19,7 +19,7 @@
         <input type='password' name='password'>
     </div>
     <div>
-        <input type='submit' value='Signup'>
+        <input type='submit' value='Create'>
     </div>
 </form>
 {{end}}

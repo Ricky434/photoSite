@@ -17,7 +17,7 @@ type userCreateForm struct {
 func (app *Application) userCreatePage(w http.ResponseWriter, r *http.Request) {
 	data := app.newTemplateData(r)
 	data.Form = userCreateForm{}
-	app.render(w, r, http.StatusOK, "signup.tmpl", data)
+	app.render(w, r, http.StatusOK, "userCreate.tmpl", data)
 }
 
 func (app *Application) userCreatePost(w http.ResponseWriter, r *http.Request) {
@@ -25,7 +25,7 @@ func (app *Application) userCreatePost(w http.ResponseWriter, r *http.Request) {
 
 	err := app.decodePostForm(r, &form)
 	if err != nil {
-		app.clientError(w, r, http.StatusBadRequest, err)
+		app.clientError(w, r, http.StatusBadRequest)
 		return
 	}
 
@@ -92,10 +92,11 @@ func (app *Application) userLoginPost(w http.ResponseWriter, r *http.Request) {
 
 	err := app.decodePostForm(r, &form)
 	if err != nil {
-		app.clientError(w, r, http.StatusBadRequest, err)
+		app.clientError(w, r, http.StatusBadRequest)
 		return
 	}
 
+	form.CheckField(validator.NotBlank(form.Password), "name", "This field cannot be blank")
 	form.CheckField(validator.NotBlank(form.Password), "password", "This field cannot be blank")
 
 	if !form.Valid() {

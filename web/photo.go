@@ -1,8 +1,10 @@
 package web
 
 import (
+	"errors"
 	"net/http"
 	"sitoWow/internal/data"
+	"sitoWow/internal/data/models"
 	"sitoWow/internal/validator"
 )
 
@@ -38,14 +40,17 @@ func (app *Application) photoList(w http.ResponseWriter, r *http.Request) {
 
 	event, err := app.Models.Events.GetByID(input.Event)
 	if err != nil {
-		//TODO check other errors
+		if errors.Is(err, models.ErrRecordNotFound) {
+			app.clientErrorHTMX(w, r, http.StatusNotFound)
+			return
+		}
+
 		app.serverErrorHTMX(w, r, err)
 		return
 	}
 
 	photos, metadata, err := app.Models.Photos.GetAll(&input.Event, input.Filters)
 	if err != nil {
-		//TODO check other errors
 		app.serverErrorHTMX(w, r, err)
 		return
 	}
