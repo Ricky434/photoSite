@@ -44,3 +44,26 @@ function sideScroll(element,direction,speed,distance,step){
         }
     }, speed);
 }
+
+// Map
+var lat = document.getElementById("latitude")
+var lon = document.getElementById("longitude")
+
+if (lat != null && lon != null) {
+    console.log(lat)
+    console.log(lat.textContent)
+    lat = parseFloat(lat.textContent)
+    lon = parseFloat(lon.textContent)
+    console.log(lat)
+
+    var map = L.map('map');
+
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
+
+    var marker = L.marker([lat, lon]).addTo(map);
+    map.setView([lat, lon], 15);
+    marker.bindPopup("<b>Hello world!</b><br>I am a popup.");
+}

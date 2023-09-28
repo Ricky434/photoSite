@@ -2,12 +2,6 @@ body {
     max-width: 80%;
 }
 
-@media (hover: none) or (pointer: coarse) { 
-    body {
-        max-width: 100% !important;
-    }
-}
-
 nav a {
     margin-right: 1.5em;
     display: inline-block;
@@ -84,15 +78,26 @@ nav a.live:hover {
 .photo {
   display: inline-grid;
   box-shadow: 0 4px 8px 4px rgba(0,0,0,0.2);
-  transition: 0.3s;
   border-radius: 20px;
-  max-height: 30vh;
   flex-basis:   auto;
-  background: #1b242e;
 }
 
 .photo:hover {
   box-shadow: 0 8px 16px 4px rgba(0,0,0,0.4);
+  -webkit-transform: scale(1.02);
+    transform: scale(1.02);
+  transition: all 0.2s ease-in-out;
+  will-change: transform;
+}
+
+.photo-flex-item {
+  max-height: 30vh;
+}
+
+.photo-grid-item {
+  max-height: 20vh;
+  object-fit: cover;
+  flex-grow: 1;
 }
 
 summary:focus, summary:hover {
@@ -108,13 +113,51 @@ summary:focus, summary:hover {
     flex-wrap:  wrap;
     flex-direction: row;
     gap: 10px;
-    /*justify-content: space-between; /*non so se e' meglio cosi o altro*/
+    /*justify-content: center; /*non so se e' meglio cosi o altro*/
+}
+
+.photo-map-info-grid {
+    display: grid;
+    grid-template-columns: 50vw 30vw;
+    grid-template-rows: 70vh 10vh;
+    gap: 50px;
 }
 
 .FullPhoto {
-    max-height: 80vh;
-    max-width: 80vw;
-    margin-left: 5vw;
-    margin-bottom: 50px; 
-    display: block;
+    max-height: 70vh;
+    align-self: center;
+    justify-self: center;
+}
+
+
+.photoInfo {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+#map {
+    height: inherit;
+    width: inherit;
+    grid-column: 2;
+    grid-row: 1;
+    margin-bottom: 23%;
+    margin-right: 10%;
+}
+
+@media (hover: none) or (pointer: coarse) { 
+    body {
+        max-width: 100% !important;
+    }
+    
+    .photo-map-info-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    #map {
+        height: 90vw;
+        width: 100%;
+        margin: 0;
+    }
 }

@@ -28,7 +28,8 @@ type TemplateData struct {
 }
 
 var functions = template.FuncMap{
-	"Add": func(a, b int) int { return a + b },
+	"Add":    func(a, b int) int { return a + b },
+	"Modulo": func(a, b, c int) bool { return a%b == c },
 }
 
 func NewTemplateCache() (map[string]*template.Template, error) {
