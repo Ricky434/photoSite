@@ -80,6 +80,7 @@ nav a.live:hover {
   box-shadow: 0 4px 8px 4px rgba(0,0,0,0.2);
   border-radius: 20px;
   flex-basis:   auto;
+  max-width:  max-content;
 }
 
 .photo:hover {
