@@ -149,6 +149,17 @@ summary:focus, summary:hover {
     body {
         max-width: 100% !important;
     }
+
+    .photo-grid {
+        justify-content: center;
+    }
+
+    .photo-grid-item {
+      max-height: 30vh;
+      max-width: 90vw;
+      object-fit: cover;
+      flex-grow: 1;
+    }
     
     .photo-map-info-grid {
         display: flex;

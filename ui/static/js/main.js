@@ -56,7 +56,7 @@ if (lat != null && lon != null) {
     lon = parseFloat(lon.textContent)
     console.log(lat)
 
-    var map = L.map('map');
+    var map = L.map('map', { dragging: !L.Browser.mobile });
 
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
