@@ -12,7 +12,7 @@
                 {{range $photos}}
                     <!-- Have to check for null event, /storage should not be hardcoded-->
                     <a href="/photos/view/{{.FileName}}" style="display: contents;">
-                    <img src="/storage/thumbnails/{{$e.Name}}/{{.FileName}}" alt="immagine super wow" class="photo-flex-item photo"/>
+                    <img src="/storage/thumbnails/{{$e.Name}}/{{.ThumbName}}" alt="immagine super wow" class="photo-flex-item photo"/>
                     </a>
                 {{end}}
                 </div>

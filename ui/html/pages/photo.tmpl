@@ -3,7 +3,14 @@
 {{define "main"}}
     <h2>Foto wow</h2>
     <div class="photo-map-info-grid">
+        {{if isVideo .Photo.FileName}}
+         <video controls class="FullPhoto">
+            <source src="/storage/photos/{{.Event.Name}}/{{.Photo.FileName}}" type="video/mp4">
+            Your browser does not support the video tag.
+        </video> 
+        {{else}}
         <img src="/storage/photos/{{.Event.Name}}/{{.Photo.FileName}}" alt="immagine super wow" class="FullPhoto"/>
+        {{end}}
 
         {{if .Photo.Latitude}}
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />

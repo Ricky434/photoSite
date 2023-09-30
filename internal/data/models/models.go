@@ -25,6 +25,11 @@ var (
 		".svg",
 		".webp",
 	}
+
+	VideoExtensions = []string{
+		".mp4",
+		".mkv",
+	}
 )
 
 type Models struct {

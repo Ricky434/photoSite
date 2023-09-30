@@ -66,20 +66,20 @@ func (c *insertPhotosCommand) Run(db *sql.DB) error {
 	return c.recursiveInsert(&m, c.path)
 }
 
-func (c *insertPhotosCommand) recursiveInsert(m *models.Models, photo_path string) error {
-	stat, err := os.Stat(photo_path)
+func (c *insertPhotosCommand) recursiveInsert(m *models.Models, file_path string) error {
+	stat, err := os.Stat(file_path)
 	if err != nil {
 		return err
 	}
 
 	if stat.IsDir() {
-		dir, err := os.ReadDir(photo_path)
+		dir, err := os.ReadDir(file_path)
 		if err != nil {
 			return err
 		}
 
 		for _, f := range dir {
-			err = c.recursiveInsert(m, path.Join(photo_path, f.Name()))
+			err = c.recursiveInsert(m, path.Join(file_path, f.Name()))
 			if err != nil {
 				return err
 			}
@@ -87,28 +87,33 @@ func (c *insertPhotosCommand) recursiveInsert(m *models.Models, photo_path strin
 		return nil
 	}
 
-	if !slices.Contains(models.ImageExtensions, strings.ToLower(path.Ext(photo_path))) {
-		fmt.Printf("Skipping invalid image: %s\n", photo_path)
-		return nil
+	if slices.Contains(models.ImageExtensions, strings.ToLower(path.Ext(file_path))) {
+		return c.insertFile(m, file_path, false)
 	}
 
-	return c.insertPhoto(m, photo_path)
+	if slices.Contains(models.VideoExtensions, strings.ToLower(path.Ext(file_path))) {
+		return c.insertFile(m, file_path, true)
+	}
+
+	fmt.Printf("Skipping invalid image or video: %s\n", file_path)
+	return nil
 }
 
-func (c *insertPhotosCommand) insertPhoto(m *models.Models, photo_path string) error {
+func (c *insertPhotosCommand) insertFile(m *models.Models, file_path string, isVideo bool) error {
 	// Extract metadata from photo
 	var ExiftoolOut []struct {
-		Latitude  *float32   `json:"GPSLatitude"`
-		Longitude *float32   `json:"GPSLongitude"`
-		TakenAt   *time.Time `json:"DateTimeOriginal"`
+		Latitude        *float32   `json:"GPSLatitude"`
+		Longitude       *float32   `json:"GPSLongitude"`
+		TakenAt         *time.Time `json:"DateTimeOriginal"`
+		TakenAtFallback *time.Time `json:"TrackCreateDate"`
 	}
 
 	cmd := exec.Command(
 		"exiftool",
-		"-TAG", "-GPSLatitude#", "-GPSLongitude#", "-DateTimeOriginal",
+		"-TAG", "-GPSLatitude#", "-GPSLongitude#", "-DateTimeOriginal", "-TrackCreateDate",
 		"-j",
 		"-d", "%Y-%m-%dT%H:%M:%SZ",
-		photo_path,
+		file_path,
 	)
 
 	stdout, err := cmd.Output()
@@ -132,13 +137,17 @@ func (c *insertPhotosCommand) insertPhoto(m *models.Models, photo_path string) e
 
 	eventID := event.ID
 
-	// Insert photo data in db
+	// Insert file data in db
 	photo := &models.Photo{
-		FileName:  path.Base(photo_path),
+		FileName:  path.Base(file_path),
 		TakenAt:   ExiftoolOut[0].TakenAt,
 		Latitude:  ExiftoolOut[0].Latitude,
 		Longitude: ExiftoolOut[0].Longitude,
 		Event:     eventID,
+	}
+
+	if photo.TakenAt == nil && ExiftoolOut[0].TakenAtFallback != nil {
+		photo.TakenAt = ExiftoolOut[0].TakenAtFallback
 	}
 
 	err = m.Photos.Insert(photo)
@@ -148,7 +157,7 @@ func (c *insertPhotosCommand) insertPhoto(m *models.Models, photo_path string) e
 
 	// Copy photo in storage
 	// Open photo
-	source, err := os.Open(photo_path)
+	source, err := os.Open(file_path)
 	if err != nil {
 		m.Photos.Delete(photo.ID)
 		return err
@@ -165,27 +174,42 @@ func (c *insertPhotosCommand) insertPhoto(m *models.Models, photo_path string) e
 	}
 	defer destination.Close()
 
+	fmt.Println("copying..")
 	_, err = io.Copy(destination, source)
 	if err != nil {
 		m.Photos.Delete(photo.ID)
 		return err
 	}
+	fmt.Println("copied")
 
 	// Make thumbnail
-	magickCmd := exec.Command(
-		"magick", "mogrify",
-		"-auto-orient",
-		"-path", path.Join(c.storageDir, "thumbnails", c.event),
-		"-thumbnail", "500x500",
-		photo_path,
-	)
+	var magickCmd *exec.Cmd
+	if !isVideo {
+		magickCmd = exec.Command(
+			"magick", "mogrify",
+			"-auto-orient",
+			"-path", path.Join(c.storageDir, "thumbnails", c.event),
+			"-thumbnail", "500x500",
+			file_path,
+		)
+	} else {
+		//TODO: problema: se esistono 2 video con stesso nome, diversa estensione, la thumbnail viene sovrascritta
+		magickCmd = exec.Command(
+			"magick", "convert",
+			"-resize", "500x500>",
+			fmt.Sprintf("%s[1]", file_path),
+			path.Join(c.storageDir, "thumbnails", c.event, fmt.Sprintf("%s%s", strings.Split(path.Base(file_path), ".")[0], ".jpg")),
+		)
+	}
 
+	fmt.Println(magickCmd.Args)
+	fmt.Println("thumbnailing..")
 	_, err = magickCmd.Output()
 	if err != nil {
 		// Rollback
 		m.Photos.Delete(photo.ID)
 		destination.Close()
-		os.Remove(photo_path)
+		os.Remove(destination.Name())
 		return err
 	}
 

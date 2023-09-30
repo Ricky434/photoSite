@@ -1,9 +1,13 @@
 package web
 
 import (
+	"fmt"
 	"net/http"
+	"path"
 	"sitoWow/internal/data"
 	"sitoWow/internal/data/models"
+	"slices"
+	"strings"
 )
 
 func (app *Application) homePage(w http.ResponseWriter, r *http.Request) {
@@ -32,7 +36,13 @@ func (app *Application) homePage(w http.ResponseWriter, r *http.Request) {
 	tdata.PhotosByEvent = make(map[int][]*models.Photo)
 
 	// Since they are already ordered, they will remain ordered
-	for _, p := range photos {
+	for i, p := range photos {
+		if slices.Contains(models.VideoExtensions, strings.ToLower(path.Ext(photos[i].FileName))) {
+			photos[i].ThumbName = fmt.Sprintf("%s%s", strings.Split(path.Base(photos[i].FileName), ".")[0], ".jpg")
+		} else {
+			photos[i].ThumbName = photos[i].FileName
+		}
+
 		tdata.PhotosByEvent[p.Event] = append(tdata.PhotosByEvent[p.Event], p)
 	}
 

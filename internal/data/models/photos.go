@@ -24,6 +24,7 @@ type PhotoModel struct {
 type Photo struct {
 	ID        int
 	FileName  string
+	ThumbName string
 	CreatedAt time.Time
 	TakenAt   *time.Time
 	Latitude  *float32

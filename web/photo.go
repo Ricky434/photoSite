@@ -2,10 +2,14 @@ package web
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
+	"path"
 	"sitoWow/internal/data"
 	"sitoWow/internal/data/models"
 	"sitoWow/internal/validator"
+	"slices"
+	"strings"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -55,6 +59,15 @@ func (app *Application) photoList(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		app.serverErrorHTMX(w, r, err)
 		return
+	}
+
+	// Set thubnail names, replace video extensions with jpg extension (for thumbnail path)
+	for i := range photos {
+		if slices.Contains(models.VideoExtensions, strings.ToLower(path.Ext(photos[i].FileName))) {
+			photos[i].ThumbName = fmt.Sprintf("%s%s", strings.Split(path.Base(photos[i].FileName), ".")[0], ".jpg")
+		} else {
+			photos[i].ThumbName = photos[i].FileName
+		}
 	}
 
 	tdata := app.newTemplateData(r)

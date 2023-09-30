@@ -145,6 +145,11 @@ summary:focus, summary:hover {
     margin-right: 10%;
 }
 
+/*Estensione video speed*/
+.vsc-controller {
+    position: absolute;
+}
+
 @media (hover: none) or (pointer: coarse) { 
     body {
         max-width: 100% !important;

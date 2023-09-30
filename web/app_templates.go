@@ -4,11 +4,14 @@ import (
 	"html/template"
 	"io/fs"
 	"net/http"
+	"path"
 	"path/filepath"
 	"sitoWow/internal/data"
 	"sitoWow/internal/data/models"
 	"sitoWow/internal/validator"
 	"sitoWow/ui"
+	"slices"
+	"strings"
 
 	"github.com/justinas/nosurf"
 )
@@ -28,8 +31,9 @@ type TemplateData struct {
 }
 
 var functions = template.FuncMap{
-	"Add":    func(a, b int) int { return a + b },
-	"Modulo": func(a, b, c int) bool { return a%b == c },
+	"Add":     func(a, b int) int { return a + b },
+	"Modulo":  func(a, b, c int) bool { return a%b == c },
+	"isVideo": func(f string) bool { return slices.Contains(models.VideoExtensions, strings.ToLower(path.Ext(f))) },
 }
 
 func NewTemplateCache() (map[string]*template.Template, error) {
