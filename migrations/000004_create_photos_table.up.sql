@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS photos (
     file_name text UNIQUE NOT NULL,
     taken_at timestamp(0) with time zone,
     latitude float CHECK (latitude between -90 and 90),
-    longitude float CHECK (longitude between -90 and 90),
+    longitude float CHECK (longitude between -180 and 180),
     event int NOT NULL,
     CONSTRAINT valid_coords CHECK ((latitude is not null and longitude is not null) or (latitude is null and longitude is null)),
     CONSTRAINT fk_event_id FOREIGN KEY(event) REFERENCES events(id)

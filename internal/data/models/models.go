@@ -11,6 +11,7 @@ var (
 	ErrRecordNotFound     = errors.New("record not found")
 	ErrEditConflict       = errors.New("edit conflict")
 	ErrInvalidCredentials = errors.New("invalid credentials")
+	ErrInvalidLatLon      = errors.New("Invalid latitude or longitude")
 
 	ImageExtensions = []string{
 		".gif",

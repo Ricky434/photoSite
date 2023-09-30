@@ -13,7 +13,7 @@
         {{with .Form.FieldErrors.event}}
             <label class='error'>{{.}}</label>
         {{end}}
-        <select value='{{.Form.Event}}'>
+        <select value='{{.Form.Event}}' type="event" name="event">
         {{range .Events}}
         <option value="{{.Name}}">{{.Name}}{{with .Date}} [{{Day .}}]{{end}}</option>
         {{end}}

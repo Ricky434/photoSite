@@ -53,6 +53,14 @@ func (m *PhotoModel) Insert(photo *Photo) error {
 	//TODO: error unique file name
 	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&photo.ID, &photo.CreatedAt)
 	if err != nil {
+		//TODO errore versione italiana
+		if err.Error() == `pq: new row for relation "photos" violates check constraint "photos_longitude_check"` {
+			return ErrInvalidLatLon
+		}
+		if err.Error() == `pq: un valore chiave duplicato viola il vincolo univoco "photos_file_name_key"` ||
+			err.Error() == `pq: duplicate key value violates unique constraint "photos_file_name_key"` {
+			return ErrDuplicateName
+		}
 		return err
 	}
 

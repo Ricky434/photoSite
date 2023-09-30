@@ -177,6 +177,27 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// Create photos and event directories if not present
+	photosDir := path.Join(app.Config.StorageDir, "photos", event.Name)
+	if _, err := os.Stat(photosDir); errors.Is(err, os.ErrNotExist) {
+		err := os.MkdirAll(photosDir, os.ModePerm)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+	}
+
+	// Create thumbnails directory if not present
+	thumbsDir := path.Join(app.Config.StorageDir, "thumbnails", event.Name)
+	if _, err := os.Stat(thumbsDir); errors.Is(err, os.ErrNotExist) {
+		err := os.MkdirAll(thumbsDir, os.ModePerm)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+
+		}
+	}
+
 	files := r.MultipartForm.File["files"]
 	for _, file := range files {
 		var isVideo bool
@@ -188,9 +209,24 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 		if !slices.Contains(models.ImageExtensions, strings.ToLower(path.Ext(file.Filename))) && !isVideo {
 			form.AddNonFieldError(fmt.Sprintf("This file is neither a supported image nor video: %s", file.Filename))
 
-			data := app.newTemplateData(r)
-			data.Form = form
-			app.render(w, r, http.StatusUnprocessableEntity, "photoUpload.tmpl", data)
+			tdata := app.newTemplateData(r)
+			tdata.Form = form
+
+			//TODO fare events getall senza filtri, e getall con filtri
+			filters := data.Filters{
+				Page:         1,
+				PageSize:     100000,
+				Sort:         "day",
+				SortSafelist: []string{"day"},
+			}
+			events, err := app.Models.Events.GetAll(filters)
+			if err != nil {
+				app.serverError(w, r, err)
+				return
+			}
+
+			tdata.Events = events
+			app.render(w, r, http.StatusUnprocessableEntity, "photoUpload.tmpl", tdata)
 			return
 		}
 
@@ -263,16 +299,35 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 		err = app.Models.Photos.Insert(photo)
 		if err != nil {
 			os.Remove(newFilePath)
+			//TODO forse conviene continuare con gli altri files e alla fine dire quali files hanno fallito
+			// Visto che non ho modo di rollbackare i files creati in precedenza
 			if errors.Is(err, models.ErrDuplicateName) {
 				form.AddNonFieldError(fmt.Sprintf("This file was already uploaded: %s", file.Filename))
-
-				data := app.newTemplateData(r)
-				data.Form = form
-				app.render(w, r, http.StatusUnprocessableEntity, "photoUpload.tmpl", data)
+			} else if errors.Is(err, models.ErrInvalidLatLon) {
+				form.AddNonFieldError(fmt.Sprintf("This file has invalid latitude or longitude: %s", file.Filename))
+			} else {
+				app.serverError(w, r, err)
 				return
 			}
 
-			app.serverError(w, r, err)
+			tdata := app.newTemplateData(r)
+			tdata.Form = form
+
+			//TODO fare events getall senza filtri, e getall con filtri
+			filters := data.Filters{
+				Page:         1,
+				PageSize:     100000,
+				Sort:         "day",
+				SortSafelist: []string{"day"},
+			}
+			events, err := app.Models.Events.GetAll(filters)
+			if err != nil {
+				app.serverError(w, r, err)
+				return
+			}
+
+			tdata.Events = events
+			app.render(w, r, http.StatusUnprocessableEntity, "photoUpload.tmpl", tdata)
 			return
 		}
 
