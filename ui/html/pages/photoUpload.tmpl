@@ -1,0 +1,31 @@
+{{define "title"}}Upload files{{end}}
+
+{{define "main"}}
+<h2>Upload Files</h2>
+<form action='/photos/upload' method='POST' enctype="multipart/form-data" novalidate>
+    <!-- Include the CSRF token -->
+    <input type='hidden' name='csrf_token' value='{{.CSRFToken}}'>
+    {{range .Form.NonFieldErrors}}
+        <div class='error'>{{.}}</div>
+    {{end}}
+    <div>
+        <label>Event:</label>
+        {{with .Form.FieldErrors.event}}
+            <label class='error'>{{.}}</label>
+        {{end}}
+        <select value='{{.Form.Event}}'>
+        {{range .Events}}
+        <option value="{{.Name}}">{{.Name}}{{with .Date}} [{{Day .}}]{{end}}</option>
+        {{end}}
+        </select>
+    </div>
+    <div>
+        <label>Files:</label>
+        <input type='file' name='files' multiple>
+    </div>
+    <div>
+        <input type='submit' value='Confirm'>
+    </div>
+</form>
+{{end}}
+

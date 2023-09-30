@@ -39,9 +39,13 @@ func (app *Application) Routes() http.Handler {
 	router.Handler(http.MethodPost, "/user/logout", protected.ThenFunc(app.userLogout))
 
 	// ADMIN
-	//TODO: Questi possono essere usati solo se utente e' loggato e con livello abbastanza alto, modificare middleware di conseguenza
-	router.Handler(http.MethodGet, "/user/create", dynamic.ThenFunc(app.userCreatePage))
-	router.Handler(http.MethodPost, "/user/create", dynamic.ThenFunc(app.userCreatePost))
+	admin := protected.Append(app.requireAdmin)
+	router.Handler(http.MethodGet, "/user/create", admin.ThenFunc(app.userCreatePage))
+	router.Handler(http.MethodPost, "/user/create", admin.ThenFunc(app.userCreatePost))
+	router.Handler(http.MethodGet, "/photos/upload", admin.ThenFunc(app.photoUploadPage))
+	router.Handler(http.MethodPost, "/photos/upload", admin.ThenFunc(app.photoUploadPost))
+	router.Handler(http.MethodGet, "/events/create", admin.ThenFunc(app.eventsCreatePage))
+	router.Handler(http.MethodPost, "/events/create", admin.ThenFunc(app.eventsCreatePost))
 
 	standard := alice.New(app.recoverPanic, app.logRequest, app.secureHeaders)
 

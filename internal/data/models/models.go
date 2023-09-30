@@ -32,6 +32,10 @@ var (
 	}
 )
 
+const (
+	ADMIN_LEVEL = 10
+)
+
 type Models struct {
 	Users  UserModelInterface
 	Photos PhotoModelInterface

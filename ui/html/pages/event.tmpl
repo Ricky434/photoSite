@@ -2,7 +2,7 @@
 
 {{define "main"}}
     <h2>{{.Event.Name}}</h2>
-    <span>{{with .Event.Date}}{{.}}{{else}}Nessuna data{{end}}</span>
+    <span>{{with .Event.Date}}{{Day .}}{{else}}Nessuna data{{end}}</span>
     <div class="photo-grid" hx-swap="innerHTML" hx-get="/photoList?event={{.Event.ID}}" hx-trigger="revealed"> <!-- htmx -->
     </div>
 {{end}}

@@ -12,6 +12,7 @@ import (
 	"sitoWow/ui"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/justinas/nosurf"
 )
@@ -21,6 +22,7 @@ type TemplateData struct {
 	Validator       *validator.Validator // use when you only need errors without a form (htmx)
 	Flash           string
 	IsAuthenticated bool
+	IsAdmin         bool
 	CSRFToken       string
 	Event           *models.Event
 	Events          []*models.Event
@@ -34,6 +36,7 @@ var functions = template.FuncMap{
 	"Add":     func(a, b int) int { return a + b },
 	"Modulo":  func(a, b, c int) bool { return a%b == c },
 	"isVideo": func(f string) bool { return slices.Contains(models.VideoExtensions, strings.ToLower(path.Ext(f))) },
+	"Day":     func(d time.Time) string { return d.Format(time.DateOnly) },
 }
 
 func NewTemplateCache() (map[string]*template.Template, error) {
@@ -68,6 +71,7 @@ func (app *Application) newTemplateData(r *http.Request) *TemplateData {
 	return &TemplateData{
 		Flash:           app.SessionManager.PopString(r.Context(), "flash"),
 		IsAuthenticated: app.IsAuthenticated(r),
+		IsAdmin:         app.IsAdmin(r),
 		CSRFToken:       nosurf.Token(r),
 	}
 }

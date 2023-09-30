@@ -2,6 +2,10 @@ body {
     max-width: 80%;
 }
 
+nav {
+    height: 3em;    
+}
+
 nav a {
     margin-right: 1.5em;
     display: inline-block;
@@ -16,9 +20,10 @@ nav div:last-child {
     text-align: right;
 }
 
-nav div:last-child a {
+nav div:last-child a,form {
     margin-left: 1.5em;
     margin-right: 0;
+    display: inline;
 }
 
 nav a.live {

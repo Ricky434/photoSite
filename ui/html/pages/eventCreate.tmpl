@@ -1,8 +1,8 @@
 {{define "title"}}Signup{{end}}
 
 {{define "main"}}
-<h2>Create User</h2>
-<form action='/user/create' method='POST' novalidate>
+<h2>Create Event</h2>
+<form action='/events/create' method='POST' novalidate>
     <!-- Include the CSRF token -->
     <input type='hidden' name='csrf_token' value='{{.CSRFToken}}'>
     <div>
@@ -13,15 +13,14 @@
         <input type='text' name='name' value='{{.Form.Name}}'>
     </div>
     <div>
-        <label>Password:</label>
-        {{with .Form.FieldErrors.password}}
+        <label>Date:</label>
+        {{with .Form.FieldErrors.date}}
             <label class='error'>{{.}}</label>
         {{end}}
-        <input type='password' name='password'>
+        <input type='date' name='date'>
     </div>
     <div>
         <input type='submit' value='Create'>
     </div>
 </form>
 {{end}}
-

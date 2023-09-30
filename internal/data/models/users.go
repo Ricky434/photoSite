@@ -14,7 +14,7 @@ type UserModelInterface interface {
 	Insert(user *User) error
 	Authenticate(name, password string) (int, error)
 	GetById(id int) (*User, error)
-	Exists(id int) (bool, error)
+	Exists(id int) (bool, int, error)
 	Update(user *User) error
 }
 
@@ -51,6 +51,7 @@ func (p *password) Set(plaintextPassword string) error {
 func ValidateUser(v *validator.Validator, user *User) {
 	v.CheckField(validator.NotBlank(user.Name), "name", "This field cannot be blank")
 	v.CheckField(validator.CharsCount(user.Name, 0, 500), "name", "Username must be at most 500 characters long")
+	v.CheckField(user.Level >= 0 && user.Level <= 10, "level", "Level must be between 0 and 10")
 
 	if user.Password.plaintext != nil {
 		v.CheckField(validator.NotBlank(*user.Password.plaintext), "password", "This field must not be blank")
@@ -65,17 +66,17 @@ func ValidateUser(v *validator.Validator, user *User) {
 
 func (m *UserModel) Insert(user *User) error {
 	query := `
-    INSERT INTO users (name, password_hash)
-    VALUES ($1, $2)
-    RETURNING id, created_at, version
+    INSERT INTO users (name, password_hash, level)
+    VALUES ($1, $2, $3)
+    RETURNING id, created_at, level, version
     `
 
-	args := []any{user.Name, user.Password.hash}
+	args := []any{user.Name, user.Password.hash, user.Level}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&user.ID, &user.CreatedAt, &user.Version)
+	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&user.ID, &user.CreatedAt, &user.Level, &user.Version)
 	if err != nil {
 		if err.Error() == `pq: un valore chiave duplicato viola il vincolo univoco "users_name_key"` ||
 			err.Error() == `pq: duplicate key value violates unique constraint "users_name_key"` {
@@ -122,7 +123,7 @@ func (m *UserModel) Authenticate(name, password string) (int, error) {
 
 func (m *UserModel) GetById(id int) (*User, error) {
 	query := `
-    SELECT id, created_at, name, password_hash, version
+    SELECT id, created_at, name, password_hash, level, version
     FROM users
     WHERE id = $1
     `
@@ -137,6 +138,7 @@ func (m *UserModel) GetById(id int) (*User, error) {
 		&user.CreatedAt,
 		&user.Name,
 		&user.Password.hash,
+		&user.Level,
 		&user.Version,
 	)
 	if err != nil {
@@ -150,29 +152,31 @@ func (m *UserModel) GetById(id int) (*User, error) {
 	return &user, nil
 }
 
-func (m *UserModel) Exists(id int) (bool, error) {
-	if _, err := m.GetById(id); err != nil {
+func (m *UserModel) Exists(id int) (bool, int, error) {
+	user, err := m.GetById(id)
+	if err != nil {
 		if errors.Is(err, ErrRecordNotFound) {
-			return false, nil
+			return false, 0, nil
 		}
 
-		return false, err
+		return false, 0, err
 	}
 
-	return true, nil
+	return true, user.Level, nil
 }
 
 func (m *UserModel) Update(user *User) error {
 	query := `
     UPDATE users
-    SET name = $1, password_hash = $2, version = version +1
-    WHERE id = $3 AND version = $4
+    SET name = $1, password_hash = $2, level = $3, version = version +1
+    WHERE id = $4 AND version = $5
     RETURNING version
     `
 
 	args := []any{
 		user.Name,
 		user.Password.hash,
+		user.Level,
 		user.ID,
 		user.Version,
 	}

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"sitoWow/internal/data/models"
 	"sitoWow/internal/validator"
 	"strconv"
 	"strings"
@@ -63,6 +64,15 @@ func (app *Application) IsAuthenticated(r *http.Request) bool {
 	}
 
 	return isAuthenticated
+}
+
+func (app *Application) IsAdmin(r *http.Request) bool {
+	level, ok := r.Context().Value(userLevelContextKey).(int)
+	if !ok || level < models.ADMIN_LEVEL {
+		return false
+	}
+
+	return true
 }
 
 func (app *Application) decodePostForm(r *http.Request, dst any) error {

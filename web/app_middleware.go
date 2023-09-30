@@ -71,6 +71,21 @@ func (app *Application) requireAuthentication(next http.Handler) http.Handler {
 	})
 }
 
+func (app *Application) requireAdmin(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !app.IsAuthenticated(r) || !app.IsAdmin(r) {
+			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
+			return
+		}
+
+		// so that pages that require authentication are not
+		// stored in the users browser cache
+		w.Header().Add("Cache-Control", "no-store")
+
+		next.ServeHTTP(w, r)
+	})
+}
+
 func (app *Application) noSurf(next http.Handler) http.Handler {
 	csrfHandler := nosurf.New(next)
 	csrfHandler.SetBaseCookie(http.Cookie{
@@ -90,13 +105,14 @@ func (app *Application) authenticate(next http.Handler) http.Handler {
 			return
 		}
 
-		exists, err := app.Models.Users.Exists(id)
+		exists, level, err := app.Models.Users.Exists(id)
 		if err != nil {
 			app.serverError(w, r, err)
 		}
 
 		if exists {
 			ctx := context.WithValue(r.Context(), isAuthenticatedContextKey, true)
+			ctx = context.WithValue(ctx, userLevelContextKey, level)
 			r = r.WithContext(ctx)
 		}
 

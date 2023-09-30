@@ -1,15 +1,20 @@
 package web
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
+	"os"
+	"os/exec"
 	"path"
 	"sitoWow/internal/data"
 	"sitoWow/internal/data/models"
 	"sitoWow/internal/validator"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -109,4 +114,199 @@ func (app *Application) photoPage(w http.ResponseWriter, r *http.Request) {
 	tdata.Event = event
 
 	app.render(w, r, http.StatusOK, "photo.tmpl", tdata)
+}
+
+type photoUploadForm struct {
+	Event               string `form:"event"`
+	validator.Validator `form:"-"`
+}
+
+func (app *Application) photoUploadPage(w http.ResponseWriter, r *http.Request) {
+	tdata := app.newTemplateData(r)
+	tdata.Form = photoUploadForm{}
+
+	filters := data.Filters{
+		Page:         1,
+		PageSize:     100000,
+		Sort:         "day",
+		SortSafelist: []string{"day"},
+	}
+	events, err := app.Models.Events.GetAll(filters)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	tdata.Events = events
+	app.render(w, r, http.StatusOK, "photoUpload.tmpl", tdata)
+}
+
+func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) {
+	// TODO: maybe split in more functions
+	var form photoUploadForm
+
+	err := r.ParseMultipartForm(32 << 20) // 32MB
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	form.Event = r.MultipartForm.Value["event"][0]
+
+	form.CheckField(form.Event != "", "event", "This field must not be empty")
+	if !form.Valid() {
+		data := app.newTemplateData(r)
+		data.Form = form
+		app.render(w, r, http.StatusUnprocessableEntity, "photoUpload.tmpl", data)
+		return
+	}
+
+	// Retrieve event id
+	event, err := app.Models.Events.GetByName(form.Event)
+	if err != nil {
+		if errors.Is(err, models.ErrRecordNotFound) {
+			form.AddFieldError("event", "Event not found")
+
+			data := app.newTemplateData(r)
+			data.Form = form
+			app.render(w, r, http.StatusUnprocessableEntity, "photoUpload.tmpl", data)
+			return
+		}
+
+		app.serverError(w, r, err)
+		return
+	}
+
+	files := r.MultipartForm.File["files"]
+	for _, file := range files {
+		var isVideo bool
+
+		if slices.Contains(models.VideoExtensions, strings.ToLower(path.Ext(file.Filename))) {
+			isVideo = true
+		}
+
+		if !slices.Contains(models.ImageExtensions, strings.ToLower(path.Ext(file.Filename))) && !isVideo {
+			form.AddNonFieldError(fmt.Sprintf("This file is neither a supported image nor video: %s", file.Filename))
+
+			data := app.newTemplateData(r)
+			data.Form = form
+			app.render(w, r, http.StatusUnprocessableEntity, "photoUpload.tmpl", data)
+			return
+		}
+
+		// Save file
+		f, err := file.Open()
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+
+		newFilePath := path.Join(app.Config.StorageDir, "photos", event.Name, file.Filename)
+
+		destination, err := os.Create(newFilePath)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+		defer destination.Close()
+
+		_, err = io.Copy(destination, f)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+		destination.Close() // Close file since we need to access it
+
+		// Extract metadata from photo
+		var ExiftoolOut []struct {
+			Latitude        *float32   `json:"GPSLatitude"`
+			Longitude       *float32   `json:"GPSLongitude"`
+			TakenAt         *time.Time `json:"DateTimeOriginal"`
+			TakenAtFallback *time.Time `json:"TrackCreateDate"`
+		}
+
+		cmd := exec.Command(
+			"exiftool",
+			"-TAG", "-GPSLatitude#", "-GPSLongitude#", "-DateTimeOriginal", "-TrackCreateDate",
+			"-j",
+			"-d", "%Y-%m-%dT%H:%M:%SZ",
+			newFilePath,
+		)
+
+		stdout, err := cmd.Output()
+		if err != nil {
+			os.Remove(newFilePath)
+			app.serverError(w, r, err)
+			return
+		}
+
+		err = json.Unmarshal(stdout, &ExiftoolOut)
+		if err != nil {
+			os.Remove(newFilePath)
+			app.serverError(w, r, err)
+			return
+		}
+
+		// Insert file data in db
+		photo := &models.Photo{
+			FileName:  path.Base(newFilePath),
+			TakenAt:   ExiftoolOut[0].TakenAt,
+			Latitude:  ExiftoolOut[0].Latitude,
+			Longitude: ExiftoolOut[0].Longitude,
+			Event:     event.ID,
+		}
+
+		if photo.TakenAt == nil && ExiftoolOut[0].TakenAtFallback != nil {
+			photo.TakenAt = ExiftoolOut[0].TakenAtFallback
+		}
+
+		err = app.Models.Photos.Insert(photo)
+		if err != nil {
+			os.Remove(newFilePath)
+			if errors.Is(err, models.ErrDuplicateName) {
+				form.AddNonFieldError(fmt.Sprintf("This file was already uploaded: %s", file.Filename))
+
+				data := app.newTemplateData(r)
+				data.Form = form
+				app.render(w, r, http.StatusUnprocessableEntity, "photoUpload.tmpl", data)
+				return
+			}
+
+			app.serverError(w, r, err)
+			return
+		}
+
+		// Make thumbnail
+		var magickCmd *exec.Cmd
+		if !isVideo {
+			magickCmd = exec.Command(
+				"magick", "mogrify",
+				"-auto-orient",
+				"-path", path.Join(app.Config.StorageDir, "thumbnails", event.Name),
+				"-thumbnail", "500x500",
+				newFilePath,
+			)
+		} else {
+			//TODO: problema: se esistono 2 video con stesso nome, diversa estensione, la thumbnail viene sovrascritta
+			magickCmd = exec.Command(
+				"magick", "convert",
+				"-resize", "500x500>",
+				fmt.Sprintf("%s[1]", newFilePath),
+				path.Join(app.Config.StorageDir, "thumbnails", event.Name, fmt.Sprintf("%s%s", strings.Split(path.Base(newFilePath), ".")[0], ".jpg")),
+			)
+		}
+
+		_, err = magickCmd.Output()
+		if err != nil {
+			// Rollback
+			app.Models.Photos.Delete(photo.ID)
+			os.Remove(destination.Name())
+			app.serverError(w, r, err)
+			return
+		}
+	}
+
+	app.SessionManager.Put(r.Context(), "flash", "Files uploaded successfully")
+
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }

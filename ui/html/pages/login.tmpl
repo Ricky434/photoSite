@@ -1,6 +1,7 @@
 {{define "title"}}Login{{end}}
 
 {{define "main"}}
+<h2>Login</h2>
 <form action='/user/login' method='POST' novalidate>
     <!-- Include the CSRF token -->
     <input type='hidden' name='csrf_token' value='{{.CSRFToken}}'>
