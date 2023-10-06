@@ -4,8 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
-	"sitoWow/internal/data"
 	"time"
 )
 
@@ -15,7 +13,7 @@ type EventModelInterface interface {
 	Delete(id int) error
 	GetByName(name string) (*Event, error)
 	GetByID(id int) (*Event, error)
-	GetAll(filters data.Filters) ([]*Event, error)
+	GetAll() ([]*Event, error)
 }
 
 type EventModel struct {
@@ -104,7 +102,6 @@ func (m *EventModel) Delete(id int) error {
 	return nil
 }
 
-// TODO: probabilmente conviene unire questo e byID in getall
 func (m *EventModel) GetByName(name string) (*Event, error) {
 	query := `
     SELECT id, name, day, version
@@ -153,18 +150,18 @@ func (m *EventModel) GetByID(id int) (*Event, error) {
 	return &event, nil
 }
 
-func (m *EventModel) GetAll(filters data.Filters) ([]*Event, error) {
-	query := fmt.Sprintf(`
+// Get all events ordered by descending day
+func (m *EventModel) GetAll() ([]*Event, error) {
+	query := `
     SELECT id, name, day, version
     FROM events
-    ORDER BY %s %s, name ASC
-    LIMIT $1 OFFSET $2
-    `, filters.SortColumn(), filters.SortDirection())
+    ORDER BY day DESC, name ASC
+    `
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	rows, err := m.DB.QueryContext(ctx, query, filters.Limit(), filters.Offset())
+	rows, err := m.DB.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}

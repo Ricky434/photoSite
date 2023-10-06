@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"path"
-	"sitoWow/internal/data"
 	"sitoWow/internal/data/models"
 	"slices"
 	"strings"
@@ -13,14 +12,7 @@ import (
 func (app *Application) homePage(w http.ResponseWriter, r *http.Request) {
 	tdata := app.newTemplateData(r)
 
-	filtersEvents := data.Filters{
-		Page:         1,
-		PageSize:     1000,
-		Sort:         "day",
-		SortSafelist: []string{"day"},
-	}
-
-	events, err := app.Models.Events.GetAll(filtersEvents)
+	events, err := app.Models.Events.GetAll()
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -38,7 +30,8 @@ func (app *Application) homePage(w http.ResponseWriter, r *http.Request) {
 	// Since they are already ordered, they will remain ordered
 	for i, p := range photos {
 		if slices.Contains(models.VideoExtensions, strings.ToLower(path.Ext(photos[i].FileName))) {
-			photos[i].ThumbName = fmt.Sprintf("%s%s", strings.Split(path.Base(photos[i].FileName), ".")[0], ".jpg")
+			// Thumbnail for video is video filename(with extension)+".jpg"
+			photos[i].ThumbName = fmt.Sprintf("%s%s", path.Base(photos[i].FileName), ".jpg")
 		} else {
 			photos[i].ThumbName = photos[i].FileName
 		}

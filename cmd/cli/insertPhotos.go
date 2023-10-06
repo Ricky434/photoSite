@@ -193,12 +193,12 @@ func (c *insertPhotosCommand) insertFile(m *models.Models, file_path string, isV
 			file_path,
 		)
 	} else {
-		//TODO: problema: se esistono 2 video con stesso nome, diversa estensione, la thumbnail viene sovrascritta
 		magickCmd = exec.Command(
 			"magick", "convert",
 			"-resize", "500x500>",
 			fmt.Sprintf("%s[1]", file_path),
-			path.Join(c.storageDir, "thumbnails", c.event, fmt.Sprintf("%s%s", strings.Split(path.Base(file_path), ".")[0], ".jpg")),
+			// Thumbnail for video is video filename(with extension)+".jpg"
+			path.Join(c.storageDir, "thumbnails", c.event, fmt.Sprintf("%s%s", path.Base(file_path), ".jpg")),
 		)
 	}
 

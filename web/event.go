@@ -59,17 +59,16 @@ func (app *Application) eventsCreatePage(w http.ResponseWriter, r *http.Request)
 }
 
 func (app *Application) eventsCreatePost(w http.ResponseWriter, r *http.Request) {
-	// TODO controlla in tutti i template per field error
 	var form eventCreateForm
 
-	//TODO perche non va in errore se la data non e' giusta???
+	// TODO perche non va in errore se la data non e' giusta???
 	err := app.decodePostForm(r, &form)
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest)
 		return
 	}
 
-	// TODO shouldnt be manual, should use UnmarshalJSON but it doesnt work
+	// shouldnt be manual, should use UnmarshalJSON but it doesnt work
 	if r.FormValue("date") != "" {
 		timeDate, err := time.Parse(time.DateOnly, r.FormValue("date"))
 		if err != nil {
@@ -86,6 +85,7 @@ func (app *Application) eventsCreatePost(w http.ResponseWriter, r *http.Request)
 	}
 
 	form.CheckField(event.Name != "", "name", "This field must not be empty")
+	form.CheckField(form.Date != nil && form.Date.IsZero(), "date", "Date must be non zero")
 
 	if !form.Valid() {
 		data := app.newTemplateData(r)

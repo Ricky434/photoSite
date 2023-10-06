@@ -50,7 +50,6 @@ func (m *PhotoModel) Insert(photo *Photo) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	//TODO: error unique file name
 	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&photo.ID, &photo.CreatedAt)
 	if err != nil {
 		//TODO errore versione italiana

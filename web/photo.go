@@ -38,7 +38,7 @@ func (app *Application) photoList(w http.ResponseWriter, r *http.Request) {
 
 	if data.ValidateFilters(v, input.Filters); !v.Valid() {
 		data := app.newTemplateData(r)
-		// TODO hack, trovare un modo per mostrare errori
+		// trovare un modo per mostrare errori
 		// penso che nei casi come questo, in cui viene restituito solo un pezzo di html e non una pagina intera,
 		// non bisogna redirectare alla pagina che ha fatto la richiesta (perche' non dovrebbe esistere, solo htmx dovrebbe farla)
 		// quindi bisogna restituire html che contiene tutti gli errori, che htmx puo far visualizzare al posto della risposta.
@@ -69,7 +69,8 @@ func (app *Application) photoList(w http.ResponseWriter, r *http.Request) {
 	// Set thubnail names, replace video extensions with jpg extension (for thumbnail path)
 	for i := range photos {
 		if slices.Contains(models.VideoExtensions, strings.ToLower(path.Ext(photos[i].FileName))) {
-			photos[i].ThumbName = fmt.Sprintf("%s%s", strings.Split(path.Base(photos[i].FileName), ".")[0], ".jpg")
+			// Thumbnail for video is video filename(with extension)+".jpg"
+			photos[i].ThumbName = fmt.Sprintf("%s%s", path.Base(photos[i].FileName), ".jpg")
 		} else {
 			photos[i].ThumbName = photos[i].FileName
 		}
@@ -125,13 +126,7 @@ func (app *Application) photoUploadPage(w http.ResponseWriter, r *http.Request) 
 	tdata := app.newTemplateData(r)
 	tdata.Form = photoUploadForm{}
 
-	filters := data.Filters{
-		Page:         1,
-		PageSize:     100000,
-		Sort:         "day",
-		SortSafelist: []string{"day"},
-	}
-	events, err := app.Models.Events.GetAll(filters)
+	events, err := app.Models.Events.GetAll()
 	if err != nil {
 		app.serverError(w, r, err)
 		return
@@ -142,7 +137,6 @@ func (app *Application) photoUploadPage(w http.ResponseWriter, r *http.Request) 
 }
 
 func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) {
-	// TODO: maybe split in more functions
 	var form photoUploadForm
 
 	err := r.ParseMultipartForm(32 << 20) // 32MB
@@ -155,9 +149,18 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 
 	form.CheckField(form.Event != "", "event", "This field must not be empty")
 	if !form.Valid() {
-		data := app.newTemplateData(r)
-		data.Form = form
-		app.render(w, r, http.StatusUnprocessableEntity, "photoUpload.tmpl", data)
+		// Render page again, with errors
+		tdata := app.newTemplateData(r)
+		tdata.Form = form
+
+		events, err := app.Models.Events.GetAll()
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+
+		tdata.Events = events
+		app.render(w, r, http.StatusUnprocessableEntity, "photoUpload.tmpl", tdata)
 		return
 	}
 
@@ -165,11 +168,20 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 	event, err := app.Models.Events.GetByName(form.Event)
 	if err != nil {
 		if errors.Is(err, models.ErrRecordNotFound) {
+			// Render page again, with errors
 			form.AddFieldError("event", "Event not found")
 
-			data := app.newTemplateData(r)
-			data.Form = form
-			app.render(w, r, http.StatusUnprocessableEntity, "photoUpload.tmpl", data)
+			tdata := app.newTemplateData(r)
+			tdata.Form = form
+
+			events, err := app.Models.Events.GetAll()
+			if err != nil {
+				app.serverError(w, r, err)
+				return
+			}
+
+			tdata.Events = events
+			app.render(w, r, http.StatusUnprocessableEntity, "photoUpload.tmpl", tdata)
 			return
 		}
 
@@ -198,6 +210,7 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
+	// TODO server error message should tell which files have been uploaded
 	files := r.MultipartForm.File["files"]
 	for _, file := range files {
 		var isVideo bool
@@ -207,27 +220,9 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 		}
 
 		if !slices.Contains(models.ImageExtensions, strings.ToLower(path.Ext(file.Filename))) && !isVideo {
+			// This is a non fatal error, add it to the errors and keep going
 			form.AddNonFieldError(fmt.Sprintf("This file is neither a supported image nor video: %s", file.Filename))
-
-			tdata := app.newTemplateData(r)
-			tdata.Form = form
-
-			//TODO fare events getall senza filtri, e getall con filtri
-			filters := data.Filters{
-				Page:         1,
-				PageSize:     100000,
-				Sort:         "day",
-				SortSafelist: []string{"day"},
-			}
-			events, err := app.Models.Events.GetAll(filters)
-			if err != nil {
-				app.serverError(w, r, err)
-				return
-			}
-
-			tdata.Events = events
-			app.render(w, r, http.StatusUnprocessableEntity, "photoUpload.tmpl", tdata)
-			return
+			continue
 		}
 
 		// Save file
@@ -299,8 +294,7 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 		err = app.Models.Photos.Insert(photo)
 		if err != nil {
 			os.Remove(newFilePath)
-			//TODO forse conviene continuare con gli altri files e alla fine dire quali files hanno fallito
-			// Visto che non ho modo di rollbackare i files creati in precedenza
+			// If there is a non fatal error, add it to the errors and keep going
 			if errors.Is(err, models.ErrDuplicateName) {
 				form.AddNonFieldError(fmt.Sprintf("This file was already uploaded: %s", file.Filename))
 			} else if errors.Is(err, models.ErrInvalidLatLon) {
@@ -310,25 +304,7 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 				return
 			}
 
-			tdata := app.newTemplateData(r)
-			tdata.Form = form
-
-			//TODO fare events getall senza filtri, e getall con filtri
-			filters := data.Filters{
-				Page:         1,
-				PageSize:     100000,
-				Sort:         "day",
-				SortSafelist: []string{"day"},
-			}
-			events, err := app.Models.Events.GetAll(filters)
-			if err != nil {
-				app.serverError(w, r, err)
-				return
-			}
-
-			tdata.Events = events
-			app.render(w, r, http.StatusUnprocessableEntity, "photoUpload.tmpl", tdata)
-			return
+			continue
 		}
 
 		// Make thumbnail
@@ -342,12 +318,12 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 				newFilePath,
 			)
 		} else {
-			//TODO: problema: se esistono 2 video con stesso nome, diversa estensione, la thumbnail viene sovrascritta
 			magickCmd = exec.Command(
 				"magick", "convert",
 				"-resize", "500x500>",
 				fmt.Sprintf("%s[1]", newFilePath),
-				path.Join(app.Config.StorageDir, "thumbnails", event.Name, fmt.Sprintf("%s%s", strings.Split(path.Base(newFilePath), ".")[0], ".jpg")),
+				// Thumbnail for video is video filename(with extension)+".jpg"
+				path.Join(app.Config.StorageDir, "thumbnails", event.Name, fmt.Sprintf("%s%s", path.Base(newFilePath), ".jpg")),
 			)
 		}
 
@@ -359,6 +335,23 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 			app.serverError(w, r, err)
 			return
 		}
+	}
+
+	// If non fatal errors happened, inform client
+	if !form.Valid() {
+		form.AddNonFieldError("All other files have been uploaded")
+		tdata := app.newTemplateData(r)
+		tdata.Form = form
+
+		events, err := app.Models.Events.GetAll()
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+
+		tdata.Events = events
+		app.render(w, r, http.StatusUnprocessableEntity, "photoUpload.tmpl", tdata)
+		return
 	}
 
 	app.SessionManager.Put(r.Context(), "flash", "Files uploaded successfully")
