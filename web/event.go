@@ -85,7 +85,7 @@ func (app *Application) eventsCreatePost(w http.ResponseWriter, r *http.Request)
 	}
 
 	form.CheckField(event.Name != "", "name", "This field must not be empty")
-	form.CheckField(form.Date != nil && form.Date.IsZero(), "date", "Date must be non zero")
+	form.CheckField(r.FormValue("date") == "" || !form.Date.IsZero(), "date", "Date must be non zero")
 
 	if !form.Valid() {
 		data := app.newTemplateData(r)
