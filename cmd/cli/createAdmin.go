@@ -67,7 +67,7 @@ func newCreateAdminCommand() *createAdminCommand {
 		fs: flag.NewFlagSet("createAdmin", flag.ContinueOnError),
 	}
 	c.fs.StringVar(&c.name, "name", "", "Name")
-	c.fs.StringVar(&c.password, "day", "", "Password")
+	c.fs.StringVar(&c.password, "password", "", "Password")
 
 	return c
 }
