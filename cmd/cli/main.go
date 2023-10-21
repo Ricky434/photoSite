@@ -34,6 +34,7 @@ func main() {
 	cmds := []Command{
 		newCreateEventCommand(),
 		newInsertPhotosCommand(),
+		newCreateAdminCommand(),
 	}
 
 	// Find command, and its index in arguments list
