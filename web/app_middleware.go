@@ -34,6 +34,7 @@ func (app *Application) logRequest(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		app.Logger.Info("request",
 			"remoteAddr", r.RemoteAddr,
+			"realIP", r.Header.Get("X-Real-IP"),
 			"protocol", r.Proto,
 			"method", r.Method,
 			"URI", r.URL.RequestURI(),

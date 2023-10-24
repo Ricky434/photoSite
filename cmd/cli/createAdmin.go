@@ -38,9 +38,6 @@ func (c *createAdminCommand) Init(args []string) error {
 }
 
 func (c *createAdminCommand) Run(db *sql.DB) error {
-	fmt.Println(c.name)
-	fmt.Println(c.password)
-
 	m := models.New(db)
 
 	user := &models.User{

@@ -1,0 +1,46 @@
+services:
+  server:
+    build:
+      context: .
+      args:
+        - DB_USER=postgres
+        - DB_PASSWORD
+        - DB_NAME=sitoWow
+        - DB_HOST=db
+        - PORT=4000
+        - ADMIN_NAME
+        - ADMIN_PASSWORD
+    image: jelly/sito-wow
+    container_name: sitoWow
+    environment:
+      - DB_USER=postgres
+      - DB_PASSWORD=$DB_PASSWORD
+      - DB_NAME=sitoWow
+      - DB_HOST=db
+      - PORT=4000
+    restart: unless-stopped
+    volumes:
+      - ./storage:/data/storage
+    ports:
+      - "4000:4000"
+    depends_on:
+      db:
+        condition: service_healthy
+  
+  db:
+    container_name: sitoWow-db
+    image: postgres
+    user: postgres
+    environment:
+      - POSTGRES_PASSWORD=$DB_PASSWORD
+      - POSTGRES_DB=sitoWow
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-d", "sitoWow"]
+      interval: 3s
+      timeout: 30s
+      retries: 5
+
+  adminer:
+    image: adminer
+    ports:
+      - "8080:8080"

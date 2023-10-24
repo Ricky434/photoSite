@@ -311,7 +311,7 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 		var magickCmd *exec.Cmd
 		if !isVideo {
 			magickCmd = exec.Command(
-				"magick", "mogrify",
+				"mogrify",
 				"-auto-orient",
 				"-path", path.Join(app.Config.StorageDir, "thumbnails", event.Name),
 				"-thumbnail", "500x500",
@@ -357,4 +357,51 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 	app.SessionManager.Put(r.Context(), "flash", "Files uploaded successfully")
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func (app Application) photoDelete(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		Event  string   `json:"event"`
+		Photos []string `json:"photos"`
+	}
+
+	err := app.readJSON(w, r, input)
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		// TODO: maybe should return html
+		return
+	}
+
+	for _, photo := range input.Photos {
+		photoPath := path.Join(app.Config.StorageDir, "photos", input.Event, photo)
+		thumbPath := path.Join(app.Config.StorageDir, "thumbnails", input.Event, photo)
+
+		err := app.Models.Photos.DeleteByFile(photo)
+		if err != nil {
+			if errors.Is(err, models.ErrRecordNotFound) {
+				app.clientError(w, http.StatusNotFound)
+				// TODO: maybe should return html, say which have succeded
+				return
+			}
+
+			app.serverError(w, r, err)
+			return
+		}
+
+		err = os.Remove(thumbPath)
+		if err != nil {
+			app.serverError(w, r, err)
+			//same
+			return
+		}
+
+		err = os.Remove(photoPath)
+		if err != nil {
+			app.serverError(w, r, err)
+			//same
+			return
+		}
+	}
+
+	// TODO: return ok
 }

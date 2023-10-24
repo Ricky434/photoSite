@@ -186,7 +186,7 @@ func (c *insertPhotosCommand) insertFile(m *models.Models, file_path string, isV
 	var magickCmd *exec.Cmd
 	if !isVideo {
 		magickCmd = exec.Command(
-			"magick", "mogrify",
+			"mogrify",
 			"-auto-orient",
 			"-path", path.Join(c.storageDir, "thumbnails", c.event),
 			"-thumbnail", "500x500",
