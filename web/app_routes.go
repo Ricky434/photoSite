@@ -44,6 +44,7 @@ func (app *Application) Routes() http.Handler {
 	router.Handler(http.MethodPost, "/user/create", admin.ThenFunc(app.userCreatePost))
 	router.Handler(http.MethodGet, "/photos/upload", admin.ThenFunc(app.photoUploadPage))
 	router.Handler(http.MethodPost, "/photos/upload", admin.ThenFunc(app.photoUploadPost))
+	router.Handler(http.MethodPost, "/photos/delete", admin.ThenFunc(app.photoDelete))
 	router.Handler(http.MethodGet, "/events/create", admin.ThenFunc(app.eventsCreatePage))
 	router.Handler(http.MethodPost, "/events/create", admin.ThenFunc(app.eventsCreatePost))
 

@@ -45,6 +45,45 @@ function sideScroll(element,direction,speed,distance,step){
     }, speed);
 }
 
+// Select images for deletion
+var toBeDeleted = []
+
+function toggleDeleting(e, file) {
+    var delButton = document.getElementById("delButton");
+
+    var index = toBeDeleted.indexOf(file);
+    if (index !== -1) {
+        if (toBeDeleted.length == 1) {
+            delButton.classList.toggle("hidden");
+        }
+        toBeDeleted.splice(index, 1);
+    } else {
+        if (toBeDeleted.length == 0) {
+            delButton.classList.toggle("hidden");
+        }
+        toBeDeleted.push(file);
+    }
+
+    e.classList.toggle("selected");
+}
+
+function deleteSelected(event, token) {
+    var data = {
+        event: event,
+        photos: toBeDeleted,
+        csrf_token: token
+    };
+    fetch("/photos/delete", {
+        method: "POST",
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data),
+        redirect: "follow"
+    }).then(res => {
+            console.log("Request complete, response:", res);
+            location.reload();
+    })
+}
+
 // Map
 var lat = document.getElementById("latitude")
 var lon = document.getElementById("longitude")

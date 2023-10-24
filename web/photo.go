@@ -352,25 +352,29 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 		tdata.Events = events
 		app.render(w, r, http.StatusUnprocessableEntity, "photoUpload.tmpl", tdata)
 		return
+	} else {
+		app.SessionManager.Put(r.Context(), "flash", "Files uploaded successfully")
 	}
-
-	app.SessionManager.Put(r.Context(), "flash", "Files uploaded successfully")
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func (app Application) photoDelete(w http.ResponseWriter, r *http.Request) {
+	app.Logger.Info("Ce l'ho fatta")
 	var input struct {
+		Token  string   `json:"csrf_token"` // only needed by readJSON since it checks for unknown keys
 		Event  string   `json:"event"`
 		Photos []string `json:"photos"`
 	}
 
-	err := app.readJSON(w, r, input)
+	err := app.readJSON(w, r, &input)
 	if err != nil {
+		fmt.Println(err.Error())
 		app.clientError(w, http.StatusBadRequest)
-		// TODO: maybe should return html
 		return
 	}
+
+	missingFiles := []string{}
 
 	for _, photo := range input.Photos {
 		photoPath := path.Join(app.Config.StorageDir, "photos", input.Event, photo)
@@ -379,9 +383,8 @@ func (app Application) photoDelete(w http.ResponseWriter, r *http.Request) {
 		err := app.Models.Photos.DeleteByFile(photo)
 		if err != nil {
 			if errors.Is(err, models.ErrRecordNotFound) {
-				app.clientError(w, http.StatusNotFound)
-				// TODO: maybe should return html, say which have succeded
-				return
+				missingFiles = append(missingFiles, photo)
+				continue
 			}
 
 			app.serverError(w, r, err)
@@ -391,17 +394,20 @@ func (app Application) photoDelete(w http.ResponseWriter, r *http.Request) {
 		err = os.Remove(thumbPath)
 		if err != nil {
 			app.serverError(w, r, err)
-			//same
 			return
 		}
 
 		err = os.Remove(photoPath)
 		if err != nil {
 			app.serverError(w, r, err)
-			//same
 			return
 		}
 	}
 
-	// TODO: return ok
+	if len(missingFiles) > 0 {
+		app.SessionManager.Put(r.Context(), "flash",
+			fmt.Sprintf("These files do not exist: \n\t%s.\nOther files have been deleted", strings.Join(missingFiles, "\n\t")))
+	} else {
+		app.SessionManager.Put(r.Context(), "flash", "Files deleted successfully")
+	}
 }

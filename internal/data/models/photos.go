@@ -12,6 +12,7 @@ import (
 type PhotoModelInterface interface {
 	Insert(photo *Photo) error
 	Delete(id int) error
+	DeleteByFile(file string) error
 	GetByFile(file string) (*Photo, error)
 	GetAll(event *int, filters data.Filters) ([]*Photo, data.Metadata, error)
 	Summary(n int) ([]*Photo, error)
@@ -76,6 +77,31 @@ func (m *PhotoModel) Delete(id int) error {
 	defer cancel()
 
 	res, err := m.DB.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+
+	count, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if count != 1 {
+		return ErrRecordNotFound
+	}
+
+	return nil
+}
+
+func (m *PhotoModel) DeleteByFile(file string) error {
+	query := `
+    DELETE FROM photos
+    WHERE file_name = $1
+    `
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	res, err := m.DB.ExecContext(ctx, query, file)
 	if err != nil {
 		return err
 	}

@@ -86,6 +86,12 @@ nav a.live:hover {
   border-radius: 20px;
   flex-basis:   auto;
   max-width:  max-content;
+  border-style: solid;
+  border-color: rgba(0, 0, 0, 0);
+}
+
+.photo.selected {
+  border-color: revert;
 }
 
 .photo:hover {
@@ -139,6 +145,18 @@ summary:focus, summary:hover {
 .photoInfo {
     display: grid;
     grid-template-columns: 1fr 1fr;
+}
+
+.hidden {
+    display: none;
+}
+
+#delButton {
+	position:fixed;
+	bottom:40px;
+	right:40px;
+	text-align:center;
+	box-shadow: 2px 2px 3px #00000099;
 }
 
 #map {

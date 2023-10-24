@@ -1,8 +1,10 @@
 {{define "title"}}Event{{end}} <!--Da cambiare-->
 
 {{define "main"}}
-    <h2>{{.Event.Name}}</h2>
-    <span>{{with .Event.Date}}{{Day .}}{{else}}Nessuna data{{end}}</span>
-    <div class="photo-grid" hx-swap="innerHTML" hx-get="/photoList?event={{.Event.ID}}" hx-trigger="revealed"> <!-- htmx -->
-    </div>
+<h2>{{.Event.Name}}</h2>
+<span>{{with .Event.Date}}{{Day .}}{{else}}Nessuna data{{end}}</span>
+<div class="photo-grid" hx-swap="innerHTML" hx-get="/photoList?event={{.Event.ID}}" hx-trigger="revealed"> <!-- htmx -->
+</div>
+<button type="button" id="delButton" class="hidden" onclick="deleteSelected({{.Event.Name}}, {{.CSRFToken}})">Delete
+    selected</button>
 {{end}}

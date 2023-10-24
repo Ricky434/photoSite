@@ -1,8 +1,11 @@
 package web
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/justinas/nosurf"
@@ -93,6 +96,40 @@ func (app *Application) noSurf(next http.Handler) http.Handler {
 		HttpOnly: true,
 		Path:     "/",
 		Secure:   true,
+	})
+
+	// Manually check json requests
+	csrfHandler.ExemptFunc(func(r *http.Request) bool {
+		if r.Header.Get("Content-Type") != "application/json" {
+			return false
+		}
+
+		var inputToken struct {
+			Token string `json:"csrf_token"`
+		}
+
+		// Read body (max 1MB)
+		maxBytes := 1_048_576 // 1MB
+		r.Body = http.MaxBytesReader(nil, r.Body, int64(maxBytes))
+		var buf []byte
+		buf, err := io.ReadAll(r.Body)
+		if err != nil {
+			return false
+		}
+
+		// json decoder wants a reader, so restore body
+		r.Body = io.NopCloser(bytes.NewBuffer(buf))
+
+		dec := json.NewDecoder(r.Body)
+		err = dec.Decode(&inputToken)
+		if err != nil {
+			return false
+		}
+
+		// handler will also expect a reader, so restore body again
+		r.Body = io.NopCloser(bytes.NewBuffer(buf))
+
+		return nosurf.VerifyToken(nosurf.Token(r), inputToken.Token)
 	})
 
 	return csrfHandler
