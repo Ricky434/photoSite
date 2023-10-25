@@ -21,6 +21,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./storage:/data/storage
+      - ./tls:/usr/src/app/tls
     ports:
       - "4000:4000"
     depends_on:
@@ -41,6 +42,7 @@ services:
       retries: 5
 
   adminer:
+    container_name: sitoWow-adminer
     image: adminer
     ports:
       - "8080:8080"

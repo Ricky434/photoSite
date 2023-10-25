@@ -10,8 +10,6 @@ COPY . .
 RUN go build -v -o /usr/local/bin/app_cli ./cmd/cli/
 RUN go build -v -o /usr/local/bin/app_server ./cmd/server/
 
-ARG STATIC_DIR="./ui/static"
-ARG STORAGE_DIR="/data/storage"
 ARG DB_USER="user"
 ARG DB_PASSWORD="password"
 ARG DB_HOST="db"
@@ -23,7 +21,8 @@ ARG ADMIN_PASSWORD=password
 ENV DB_DSN="postgres://$DB_USER:$DB_PASSWORD@$DB_HOST/$DB_NAME?sslmode=disable"
 ENV ADMIN_NAME=$ADMIN_NAME
 ENV ADMIN_PASSWORD=$ADMIN_PASSWORD
+ENV STORAGE_DIR="/data/storage"
 
 CMD migrate -path=./migrations -database=$DB_DSN up \
     && app_cli -db-dsn $DB_DSN createAdmin -name $ADMIN_NAME -password $ADMIN_PASSWORD; \
-    app_server -db-dsn $DB_DSN -port $PORT -static-dir $STATIC_DIR -storage-dir $STORAGE_DIR
+    app_server -db-dsn $DB_DSN -port $PORT -storage-dir $STORAGE_DIR
