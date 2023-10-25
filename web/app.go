@@ -53,8 +53,8 @@ func (app *Application) Serve() error {
 		Handler:      app.Routes(),
 		TLSConfig:    tlsConfig,
 		IdleTimeout:  time.Minute,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
+		ReadTimeout:  0,
+		WriteTimeout: 0,
 	}
 
 	shutdownError := make(chan error)

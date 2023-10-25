@@ -152,9 +152,12 @@ func (m *PhotoModel) GetAll(event *int, filters data.Filters) ([]*Photo, data.Me
     SELECT COUNT(*) OVER(), photos.id, file_name, created_at, taken_at, latitude, longitude, event
     FROM photos LEFT JOIN events ON event = events.id
     WHERE event = $1 OR $1 IS NULL
-    ORDER BY %s %s, taken_at ASC
+    ORDER BY %s %s, taken_at ASC, photos.id
     LIMIT $2 OFFSET $3
     `, filters.SortColumn(), filters.SortDirection())
+	// IMPORTANT: the order by photos.id is necessary because in case of ties in ordering
+	// posgres makes no guarantee about what the ordering will be, so records could be
+	// seen as "moving around". Thus, we need an attribute that cannot be tied
 
 	args := []any{newNullInt(event), filters.Limit(), filters.Offset()}
 

@@ -360,7 +360,6 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 }
 
 func (app Application) photoDelete(w http.ResponseWriter, r *http.Request) {
-	app.Logger.Info("Ce l'ho fatta")
 	var input struct {
 		Token  string   `json:"csrf_token"` // only needed by readJSON since it checks for unknown keys
 		Event  string   `json:"event"`
@@ -376,7 +375,9 @@ func (app Application) photoDelete(w http.ResponseWriter, r *http.Request) {
 
 	missingFiles := []string{}
 
-	for _, photo := range input.Photos {
+	n := len(input.Photos)
+	for i, photo := range input.Photos {
+		fmt.Printf("%d/%d\n", i+1, n)
 		photoPath := path.Join(app.Config.StorageDir, "photos", input.Event, photo)
 		thumbPath := path.Join(app.Config.StorageDir, "thumbnails", input.Event, photo)
 
@@ -388,19 +389,19 @@ func (app Application) photoDelete(w http.ResponseWriter, r *http.Request) {
 			}
 
 			app.serverError(w, r, err)
-			return
+			//return
 		}
 
 		err = os.Remove(thumbPath)
 		if err != nil {
 			app.serverError(w, r, err)
-			return
+			//return
 		}
 
 		err = os.Remove(photoPath)
 		if err != nil {
 			app.serverError(w, r, err)
-			return
+			//return
 		}
 	}
 
