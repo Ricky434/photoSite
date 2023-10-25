@@ -41,10 +41,13 @@ services:
       timeout: 30s
       retries: 5
     volumes:
-      - ./postgres-data:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
 
   adminer:
     container_name: sitoWow-adminer
     image: adminer
     ports:
       - "8080:8080"
+
+volumes:
+  pgdata:

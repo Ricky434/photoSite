@@ -7,7 +7,7 @@
     {{$photos := index $.PhotosByEvent $e.ID}}
     {{if gt (len $photos) 0}}
     <details open="">
-        <summary class="event-name">{{$e.Name}}{{with .Event.Date}} [{{Day .}}]<a href="/events/view/{{$e.Name}}"
+        <summary class="event-name">{{$e.Name}}{{with .Event.Date}} [{{Day .}}{{end}}]<a href="/events/view/{{$e.Name}}"
                 class="event-link">Altre foto ></a></summary>
         <div class="content photo-flex">
             {{range $photos}}
