@@ -23,14 +23,16 @@ type PhotoModel struct {
 }
 
 type Photo struct {
-	ID        int
-	FileName  string
-	ThumbName string
-	CreatedAt time.Time
-	TakenAt   *time.Time
-	Latitude  *float32
-	Longitude *float32
-	Event     int
+	ID           int
+	FileName     string
+	ThumbName    string
+	CreatedAt    time.Time
+	TakenAt      *time.Time
+	Latitude     *float32
+	Longitude    *float32
+	Event        int
+	PreviousFile *string
+	NextFile     *string
 }
 
 func (m *PhotoModel) Insert(photo *Photo) error {
@@ -117,10 +119,17 @@ func (m *PhotoModel) DeleteByFile(file string) error {
 	return nil
 }
 
+// Get photo by file, along with its previous and next photos' file names (in the same event)
 func (m *PhotoModel) GetByFile(file string) (*Photo, error) {
 	query := `
-    SELECT id, file_name, created_at, taken_at, latitude, longitude, event
-    FROM photos
+	SELECT *
+	FROM (
+		SELECT id, file_name, created_at, taken_at, latitude, longitude, event,
+				lag(file_name) over (order by taken_at asc, id asc) as prev,
+				lead(file_name) over (order by taken_at asc, id asc) as next
+		FROM photos
+		WHERE event = (select event from photos where file_name = $1)
+	) x
     WHERE file_name = $1
     `
 
@@ -136,6 +145,8 @@ func (m *PhotoModel) GetByFile(file string) (*Photo, error) {
 		&photo.Latitude,
 		&photo.Longitude,
 		&photo.Event,
+		&photo.PreviousFile,
+		&photo.NextFile,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

@@ -31,4 +31,10 @@
             {{end}}
         </div>
     </div>
+    {{with .Photo.PreviousFile}}
+    <a href="/photos/view/{{.}}" style="display: contents;">Previous</a>
+    {{end}}
+    {{with .Photo.NextFile}}
+    <a href="/photos/view/{{.}}" style="display: contents;">Next</a>
+    {{end}}
 {{end}}
