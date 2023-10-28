@@ -31,6 +31,7 @@ services:
   db:
     container_name: sitoWow-db
     image: postgres
+    restart: unless-stopped
     user: postgres
     environment:
       - POSTGRES_PASSWORD=$DB_PASSWORD
@@ -46,6 +47,7 @@ services:
   adminer:
     container_name: sitoWow-adminer
     image: adminer
+    restart: unless-stopped
     ports:
       - "8080:8080"
 

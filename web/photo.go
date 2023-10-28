@@ -368,16 +368,13 @@ func (app Application) photoDelete(w http.ResponseWriter, r *http.Request) {
 
 	err := app.readJSON(w, r, &input)
 	if err != nil {
-		fmt.Println(err.Error())
 		app.clientError(w, http.StatusBadRequest)
 		return
 	}
 
 	missingFiles := []string{}
 
-	n := len(input.Photos)
-	for i, photo := range input.Photos {
-		fmt.Printf("%d/%d\n", i+1, n)
+	for _, photo := range input.Photos {
 		photoPath := path.Join(app.Config.StorageDir, "photos", input.Event, photo)
 		thumbPath := path.Join(app.Config.StorageDir, "thumbnails", input.Event, photo)
 

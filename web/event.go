@@ -3,6 +3,8 @@ package web
 import (
 	"errors"
 	"net/http"
+	"os"
+	"path"
 	"sitoWow/internal/data/models"
 	"sitoWow/internal/validator"
 	"time"
@@ -110,6 +112,96 @@ func (app *Application) eventsCreatePost(w http.ResponseWriter, r *http.Request)
 	}
 
 	app.SessionManager.Put(r.Context(), "flash", "Event created successfully")
+
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+type eventDeleteForm struct {
+	Event               string `form:"event"`
+	validator.Validator `form:"-"`
+}
+
+func (app *Application) eventsDeletePage(w http.ResponseWriter, r *http.Request) {
+	tdata := app.newTemplateData(r)
+	tdata.Form = eventDeleteForm{}
+
+	events, err := app.Models.Events.GetAll()
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	tdata.Events = events
+	app.render(w, r, http.StatusOK, "eventDelete.tmpl", tdata)
+}
+
+func (app *Application) eventsDeletePost(w http.ResponseWriter, r *http.Request) {
+	var form eventDeleteForm
+
+	err := app.decodePostForm(r, &form)
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	form.CheckField(form.Event != "", "event", "You must select an event")
+	if !form.Valid() {
+		// Render page again, with errors
+		tdata := app.newTemplateData(r)
+		tdata.Form = form
+
+		events, err := app.Models.Events.GetAll()
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+
+		tdata.Events = events
+		app.render(w, r, http.StatusUnprocessableEntity, "eventDelete.tmpl", tdata)
+		return
+	}
+
+	// Delete event
+	err = app.Models.Events.Delete(form.Event)
+	if err != nil {
+		if errors.Is(err, models.ErrRecordNotFound) {
+			// Render page again, with errors
+			form.AddFieldError("event", "Event not found")
+
+			tdata := app.newTemplateData(r)
+			tdata.Form = form
+
+			events, err := app.Models.Events.GetAll()
+			if err != nil {
+				app.serverError(w, r, err)
+				return
+			}
+
+			tdata.Events = events
+			app.render(w, r, http.StatusUnprocessableEntity, "eventDelete.tmpl", tdata)
+			return
+		}
+
+		app.serverError(w, r, err)
+		return
+	}
+
+	photoPath := path.Join(app.Config.StorageDir, "photos", form.Event)
+	thumbPath := path.Join(app.Config.StorageDir, "thumbnails", form.Event)
+
+	err = os.RemoveAll(thumbPath)
+	if err != nil {
+		app.serverError(w, r, err)
+		//return
+	}
+
+	err = os.RemoveAll(photoPath)
+	if err != nil {
+		app.serverError(w, r, err)
+		//return
+	}
+
+	app.SessionManager.Put(r.Context(), "flash", "Event deleted successfully")
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }

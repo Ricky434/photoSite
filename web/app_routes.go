@@ -47,6 +47,8 @@ func (app *Application) Routes() http.Handler {
 	router.Handler(http.MethodPost, "/photos/delete", admin.ThenFunc(app.photoDelete))
 	router.Handler(http.MethodGet, "/events/create", admin.ThenFunc(app.eventsCreatePage))
 	router.Handler(http.MethodPost, "/events/create", admin.ThenFunc(app.eventsCreatePost))
+	router.Handler(http.MethodGet, "/events/delete", admin.ThenFunc(app.eventsDeletePage))
+	router.Handler(http.MethodPost, "/events/delete", admin.ThenFunc(app.eventsDeletePost))
 
 	standard := alice.New(app.recoverPanic, app.logRequest, app.secureHeaders)
 

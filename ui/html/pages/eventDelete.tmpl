@@ -1,0 +1,23 @@
+{{define "title"}}Delete event{{end}}
+
+{{define "main"}}
+<h2>Delete Event</h2>
+<form action='/events/delete' method='POST' novalidate>
+    <!-- Include the CSRF token -->
+    <input type='hidden' name='csrf_token' value='{{.CSRFToken}}'>
+    <div>
+        <label>Event:</label>
+        {{with .Form.FieldErrors.event}}
+        <label class='error'>{{.}}</label>
+        {{end}}
+        <select value='{{.Form.Event}}' type="event" name="event">
+            {{range .Events}}
+            <option value="{{.Name}}">{{.Name}}{{with .Date}} [{{Day .}}]{{end}}</option>
+            {{end}}
+        </select>
+    </div>
+    <div>
+        <input type='submit' value='Confirm'>
+    </div>
+</form>
+{{end}}

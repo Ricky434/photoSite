@@ -10,7 +10,7 @@ import (
 type EventModelInterface interface {
 	Insert(event *Event) error
 	Update(event *Event) error
-	Delete(id int) error
+	Delete(name string) error
 	GetByName(name string) (*Event, error)
 	GetByID(id int) (*Event, error)
 	GetAll() ([]*Event, error)
@@ -77,16 +77,16 @@ func (m *EventModel) Update(event *Event) error {
 	return nil
 }
 
-func (m *EventModel) Delete(id int) error {
+func (m *EventModel) Delete(name string) error {
 	query := `
     DELETE FROM events
-    WHERE id = $1
+    WHERE name = $1
     `
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	res, err := m.DB.ExecContext(ctx, query, id)
+	res, err := m.DB.ExecContext(ctx, query, name)
 	if err != nil {
 		return err
 	}
