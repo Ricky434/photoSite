@@ -46,22 +46,25 @@ function sideScroll(element,direction,speed,distance,step){
 }
 
 // Select images for deletion
-var toBeDeleted = []
+var selected = []
 
-function toggleDeleting(e, file) {
+function toggleSelected(e, file) {
     var delButton = document.getElementById("delButton");
+    var downloadButton = document.getElementById("downloadButton");
 
-    var index = toBeDeleted.indexOf(file);
+    var index = selected.indexOf(file);
     if (index !== -1) {
-        if (toBeDeleted.length == 1) {
-            delButton.classList.toggle("hidden");
+        if (selected.length == 1) {
+            delButton?.classList.toggle("hidden");
+            downloadButton.classList.toggle("hidden");
         }
-        toBeDeleted.splice(index, 1);
+        selected.splice(index, 1);
     } else {
-        if (toBeDeleted.length == 0) {
-            delButton.classList.toggle("hidden");
+        if (selected.length == 0) {
+            delButton?.classList.toggle("hidden");
+            downloadButton.classList.toggle("hidden");
         }
-        toBeDeleted.push(file);
+        selected.push(file);
     }
 
     e.classList.toggle("selected");
@@ -70,7 +73,7 @@ function toggleDeleting(e, file) {
 function deleteSelected(event, token) {
     var data = {
         event: event,
-        photos: toBeDeleted,
+        photos: selected,
         csrf_token: token
     };
     fetch("/photos/delete", {
@@ -82,6 +85,33 @@ function deleteSelected(event, token) {
             console.log("Request complete, response:", res);
             location.reload();
     })
+}
+
+function downloadSelected(event, token) {
+    var data = {
+        event: event,
+        photos: selected,
+        csrf_token: token
+    };
+    fetch("/photos/download", {
+        method: "POST",
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data),
+        redirect: "follow"
+    })
+    .then(response => {
+        const header = response.headers.get('Content-Disposition');
+        const parts = header.split(';');
+        filename = parts[1].split('=')[1].replaceAll("\"", "");
+
+        return response.blob();
+    })
+    .then(data => {
+        var a = document.createElement("a");
+        a.href = window.URL.createObjectURL(data);
+        a.download = filename;
+        a.click();
+    });
 }
 
 function showLoadingWheel(elementId) {

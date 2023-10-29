@@ -1,6 +1,7 @@
 package web
 
 import (
+	"archive/zip"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -16,6 +17,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -373,7 +375,18 @@ func (app Application) photoDelete(w http.ResponseWriter, r *http.Request) {
 
 	for _, photo := range input.Photos {
 		photoPath := path.Join(app.Config.StorageDir, "photos", input.Event, photo)
-		thumbPath := path.Join(app.Config.StorageDir, "thumbnails", input.Event, photo)
+		// Prevent path traversal
+		if !app.InAllowedPath(photoPath, path.Join(app.Config.StorageDir, "photos")) {
+			app.clientError(w, http.StatusBadRequest)
+			return
+		}
+
+		thumbPath := path.Join(app.Config.StorageDir, "thumbnails", input.Event)
+		// Prevent path traversal
+		if !app.InAllowedPath(thumbPath, path.Join(app.Config.StorageDir, "thumbnails")) {
+			app.clientError(w, http.StatusBadRequest)
+			return
+		}
 
 		err := app.Models.Photos.DeleteByFile(photo)
 		if err != nil {
@@ -404,5 +417,136 @@ func (app Application) photoDelete(w http.ResponseWriter, r *http.Request) {
 			fmt.Sprintf("These files do not exist: \n\t%s.\nOther files have been deleted", strings.Join(missingFiles, "\n\t")))
 	} else {
 		app.SessionManager.Put(r.Context(), "flash", "Files deleted successfully")
+	}
+}
+
+func (app Application) photoDownload(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		Token  string   `json:"csrf_token"` // only needed by readJSON since it checks for unknown keys
+		Event  string   `json:"event"`
+		Photos []string `json:"photos"`
+	}
+
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+	// TODO: check len(photos) > 0
+
+	// Check for files existance
+	for _, photo := range input.Photos {
+		_, err := app.Models.Photos.GetByFile(photo)
+		if err != nil {
+			if errors.Is(err, models.ErrRecordNotFound) {
+				app.clientError(w, http.StatusNotFound)
+				return
+			}
+
+			app.serverError(w, r, err)
+			return
+		}
+	}
+
+	if len(input.Photos) == 1 {
+		photoPath := path.Join(app.Config.StorageDir, "photos", input.Event, input.Photos[0])
+		// Prevent path traversal
+		if !app.InAllowedPath(photoPath, path.Join(app.Config.StorageDir, "photos")) {
+			app.clientError(w, http.StatusBadRequest)
+			return
+		}
+
+		w.Header().Set("Content-Type", "image")
+		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", input.Photos[0]))
+
+		// There is probably a better way
+		file, err := os.ReadFile(photoPath)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+		_, err = w.Write(file)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+		return
+	}
+
+	// ---- Zip files
+	tmpDir := path.Join(app.Config.StorageDir, "tmp")
+	tmpPath := path.Join(tmpDir, uuid.NewString())
+
+	// Create temp directory if not present
+	if _, err := os.Stat(tmpDir); errors.Is(err, os.ErrNotExist) {
+		err := os.MkdirAll(tmpDir, os.ModePerm)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+	}
+
+	// Create temp zip file
+	tmpZip, err := os.Create(tmpPath)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	defer func() {
+		// TODO: Error handling?
+		tmpZip.Close()
+		os.Remove(tmpPath)
+	}()
+
+	zipWriter := zip.NewWriter(tmpZip)
+
+	// Add photos to zip
+	for _, photo := range input.Photos {
+		photoPath := path.Join(app.Config.StorageDir, "photos", input.Event, photo)
+		// Prevent path traversal
+		if !app.InAllowedPath(photoPath, path.Join(app.Config.StorageDir, "photos")) {
+			app.clientError(w, http.StatusBadRequest)
+			return
+		}
+
+		f, err := os.Open(photoPath)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+		defer f.Close()
+
+		zw, err := zipWriter.Create(photo)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+
+		_, err = io.Copy(zw, f)
+		if err != nil {
+			app.serverError(w, r, err)
+			return
+		}
+	}
+
+	err = zipWriter.Close()
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/zip")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"foto.zip\""))
+
+	// There is probably a better way
+	file, err := os.ReadFile(tmpPath)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	_, err = w.Write(file)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
 	}
 }

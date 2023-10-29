@@ -2,7 +2,7 @@
 {{range .Photos}}
 <a href="/photos/view/{{.FileName}}" style="display: contents;">
     <img src="/storage/thumbnails/{{$.Event.Name}}/{{.ThumbName}}" alt="immagine super wow"
-        class="photo-grid-item photo" {{if $.IsAdmin}}oncontextmenu="toggleDeleting(this, {{.FileName}}); return false;"{{end}}/>
+        class="photo-grid-item photo" oncontextmenu="toggleSelected(this, {{.FileName}}); return false;" />
 </a>
 {{end}}
 {{if lt .Metadata.CurrentPage .Metadata.LastPage}}

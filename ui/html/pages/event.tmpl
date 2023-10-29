@@ -2,9 +2,16 @@
 
 {{define "main"}}
 <h2>{{.Event.Name}}</h2>
-<span>{{with .Event.Date}}{{Day .}}{{else}}Nessuna data{{end}}</span>
+<div id="event-header">
+<h4>{{with .Event.Date}}{{DayWords .}}{{else}}Nessuna data{{end}}</h4>
+<div id="dwl-event"><a href="/events/download/{{.Event.Name}}" download="{{.Event.Name}}.zip">Download all photos</a></div>
+</div>
 <div class="photo-grid" hx-swap="innerHTML" hx-get="/photoList?event={{.Event.ID}}" hx-trigger="revealed"> <!-- htmx -->
 </div>
-<button type="button" id="delButton" class="hidden" onclick="deleteSelected({{.Event.Name}}, {{.CSRFToken}})">Delete
-    selected</button>
+<div class="selectedButtons">
+    <button type="button" id="downloadButton" class="hidden" onclick="downloadSelected({{.Event.Name}}, {{.CSRFToken}})">Download selected</button>
+    {{if $.IsAdmin}}
+    <button type="button" id="delButton" class="hidden" onclick="deleteSelected({{.Event.Name}}, {{.CSRFToken}})">Delete selected</button>
+    {{end}}
+</div>
 {{end}}
