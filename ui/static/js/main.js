@@ -84,6 +84,11 @@ function deleteSelected(event, token) {
     })
 }
 
+function showLoadingWheel(elementId) {
+    var loadingWheel = document.getElementById(elementId);
+    loadingWheel.style.display = "block";
+}
+
 // Map
 var lat = document.getElementById("latitude")
 var lon = document.getElementById("longitude")

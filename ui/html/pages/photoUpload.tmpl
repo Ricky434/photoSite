@@ -23,8 +23,10 @@
         <label>Files:</label>
         <input type='file' name='files' multiple>
     </div>
-    <div>
-        <input type='submit' value='Confirm'>
+    <div style="display: flex;">
+        <input type='submit' value='Confirm' onclick="showLoadingWheel('lds-ellipsis')">
+        <!-- Loading wheel -->
+        <div id="lds-ellipsis" style="display:none;"><div></div><div></div><div></div><div></div></div>
     </div>
 </form>
 {{end}}
