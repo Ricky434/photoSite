@@ -133,8 +133,8 @@ summary:focus, summary:hover {
 .photo-map-info-grid {
     display: grid;
     grid-template-columns: 50vw 30vw;
-    grid-template-rows: 70vh 10vh;
-    gap: 50px;
+    grid-template-rows: 75vh 15vh;
+    gap: 20px;
 }
 
 .FullPhoto {
@@ -146,7 +146,25 @@ summary:focus, summary:hover {
 
 .photoInfo {
     display: grid;
+    align-self: center;
+    justify-self: center; 
+    gap: 20px;
+    background: #00000040;
+    border-radius: 20px;
+    padding: 20px;
     grid-template-columns: 1fr 1fr;
+}
+
+.prevNext {
+    white-space: nowrap;
+}
+
+.prevNext div {
+    display: inline-block;
+}
+
+.prevNext .next-photo {
+    float: right;
 }
 
 .hidden {
@@ -166,8 +184,10 @@ summary:focus, summary:hover {
     width: inherit;
     grid-column: 2;
     grid-row: 1;
-    margin-bottom: 23%;
-    margin-right: 10%;
+    height: 75%;
+    width: 90%;
+    align-self: center;
+    justify-self: center; 
 }
 
 /*Estensione video speed*/

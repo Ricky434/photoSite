@@ -31,10 +31,12 @@
             {{end}}
         </div>
     </div>
-    {{with .Photo.PreviousFile}}
-    <a class="prev-photo" href="/photos/view/{{.}}" style="display: contents;">Previous</a>
-    {{end}}
-    {{with .Photo.NextFile}}
-    <a class="next-photo" href="/photos/view/{{.}}" style="display: contents;">Next</a>
-    {{end}}
+    <div class="prevNext">
+        {{with .Photo.PreviousFile}}
+        <div class="prev-photo"><a href="/photos/view/{{.}}" style="display: contents;">Previous</a></div>
+        {{end}}
+        {{with .Photo.NextFile}}
+        <div class="next-photo"><a href="/photos/view/{{.}}" style="display: contents;">Next</a></div>
+        {{end}}
+    </div>
 {{end}}

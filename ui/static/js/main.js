@@ -89,6 +89,12 @@ function showLoadingWheel(elementId) {
     loadingWheel.style.display = "block";
 }
 
+if (document.getElementById("map") == null) {
+    var pmig = document.getElementsByClassName('photo-map-info-grid');
+    for(i = 0; i < pmig.length; i++) {
+        pmig[i].style.gridTemplateColumns = '100%';
+    }
+}
 // Map
 var lat = document.getElementById("latitude")
 var lon = document.getElementById("longitude")
