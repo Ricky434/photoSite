@@ -109,7 +109,7 @@ nav a.live:hover {
 }
 
 .photo-grid-item {
-  max-height: 30vh;
+  max-height: 20vh;
   object-fit: cover;
   flex-grow: 1;
 }
@@ -141,6 +141,7 @@ summary:focus, summary:hover {
     max-height: 70vh;
     align-self: center;
     justify-self: center;
+    border-radius: 5px;
 }
 
 
@@ -188,6 +189,7 @@ summary:focus, summary:hover {
     width: 90%;
     align-self: center;
     justify-self: center; 
+    border-radius: 5px;
 }
 
 /*Estensione video speed*/
