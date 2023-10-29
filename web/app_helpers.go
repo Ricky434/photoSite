@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"sitoWow/internal/data/models"
 	"sitoWow/internal/validator"
 	"strconv"
@@ -75,6 +76,17 @@ func (app *Application) IsAdmin(r *http.Request) bool {
 	}
 
 	return true
+}
+
+func (app *Application) InAllowedPath(path string, trustedRoot string) bool {
+	path = filepath.Clean(path)
+	for path != "/" {
+		path = filepath.Dir(path)
+		if path == trustedRoot {
+			return true
+		}
+	}
+	return false
 }
 
 func (app *Application) decodePostForm(r *http.Request, dst any) error {

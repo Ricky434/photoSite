@@ -136,6 +136,21 @@ func (app *Application) photoUploadPage(w http.ResponseWriter, r *http.Request) 
 	app.render(w, r, http.StatusOK, "photoUpload.tmpl", tdata)
 }
 
+func (app *Application) renderPhotosUploadErrors(w http.ResponseWriter, r *http.Request, form photoUploadForm) {
+	// Render page again, with errors
+	tdata := app.newTemplateData(r)
+	tdata.Form = form
+
+	events, err := app.Models.Events.GetAll()
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	tdata.Events = events
+	app.render(w, r, http.StatusUnprocessableEntity, "photoUpload.tmpl", tdata)
+}
+
 func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) {
 	var form photoUploadForm
 
@@ -149,18 +164,7 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 
 	form.CheckField(form.Event != "", "event", "This field must not be empty")
 	if !form.Valid() {
-		// Render page again, with errors
-		tdata := app.newTemplateData(r)
-		tdata.Form = form
-
-		events, err := app.Models.Events.GetAll()
-		if err != nil {
-			app.serverError(w, r, err)
-			return
-		}
-
-		tdata.Events = events
-		app.render(w, r, http.StatusUnprocessableEntity, "photoUpload.tmpl", tdata)
+		app.renderPhotosUploadErrors(w, r, form)
 		return
 	}
 
@@ -170,18 +174,7 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 		if errors.Is(err, models.ErrRecordNotFound) {
 			// Render page again, with errors
 			form.AddFieldError("event", "Event not found")
-
-			tdata := app.newTemplateData(r)
-			tdata.Form = form
-
-			events, err := app.Models.Events.GetAll()
-			if err != nil {
-				app.serverError(w, r, err)
-				return
-			}
-
-			tdata.Events = events
-			app.render(w, r, http.StatusUnprocessableEntity, "photoUpload.tmpl", tdata)
+			app.renderPhotosUploadErrors(w, r, form)
 			return
 		}
 
@@ -189,8 +182,15 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Create photos and event directories if not present
+	// Check if photos event directory is allowed (prevent path traversal)
 	photosDir := path.Join(app.Config.StorageDir, "photos", event.Name)
+	if !app.InAllowedPath(photosDir, path.Join(app.Config.StorageDir, "photos")) {
+		form.AddFieldError("event", "Event is not valid")
+		app.renderPhotosUploadErrors(w, r, form)
+		return
+	}
+
+	// Create photos and event directories if not present
 	if _, err := os.Stat(photosDir); errors.Is(err, os.ErrNotExist) {
 		err := os.MkdirAll(photosDir, os.ModePerm)
 		if err != nil {
@@ -199,8 +199,15 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
-	// Create thumbnails directory if not present
+	// Check if photos event directory is allowed (prevent path traversal)
 	thumbsDir := path.Join(app.Config.StorageDir, "thumbnails", event.Name)
+	if !app.InAllowedPath(thumbsDir, path.Join(app.Config.StorageDir, "thumbnails")) {
+		form.AddFieldError("event", "Event is not valid")
+		app.renderPhotosUploadErrors(w, r, form)
+		return
+	}
+
+	// Create thumbnails directory if not present
 	if _, err := os.Stat(thumbsDir); errors.Is(err, os.ErrNotExist) {
 		err := os.MkdirAll(thumbsDir, os.ModePerm)
 		if err != nil {
@@ -211,6 +218,7 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// TODO server error message should tell which files have been uploaded
+	// TODO is file name at risk for path traversal?
 	files := r.MultipartForm.File["files"]
 	for _, file := range files {
 		var isVideo bool
@@ -340,22 +348,11 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 	// If non fatal errors happened, inform client
 	if !form.Valid() {
 		form.AddNonFieldError("All other files have been uploaded")
-		tdata := app.newTemplateData(r)
-		tdata.Form = form
-
-		events, err := app.Models.Events.GetAll()
-		if err != nil {
-			app.serverError(w, r, err)
-			return
-		}
-
-		tdata.Events = events
-		app.render(w, r, http.StatusUnprocessableEntity, "photoUpload.tmpl", tdata)
+		app.renderPhotosUploadErrors(w, r, form)
 		return
-	} else {
-		app.SessionManager.Put(r.Context(), "flash", "Files uploaded successfully")
 	}
 
+	app.SessionManager.Put(r.Context(), "flash", "Files uploaded successfully")
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 

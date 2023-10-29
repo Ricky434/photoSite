@@ -7,6 +7,7 @@ import (
 	"path"
 	"sitoWow/internal/data/models"
 	"sitoWow/internal/validator"
+	"strings"
 	"time"
 
 	"github.com/julienschmidt/httprouter"
@@ -88,6 +89,8 @@ func (app *Application) eventsCreatePost(w http.ResponseWriter, r *http.Request)
 
 	form.CheckField(event.Name != "", "name", "This field must not be empty")
 	form.CheckField(r.FormValue("date") == "" || !form.Date.IsZero(), "date", "Date must be non zero")
+	// Try to prevent path traversal attacks
+	form.CheckField(!strings.Contains(event.Name, ".."), "name", "This field must not contain the string '..'")
 
 	if !form.Valid() {
 		data := app.newTemplateData(r)
@@ -135,6 +138,21 @@ func (app *Application) eventsDeletePage(w http.ResponseWriter, r *http.Request)
 	app.render(w, r, http.StatusOK, "eventDelete.tmpl", tdata)
 }
 
+func (app *Application) renderEventDeleteErrors(w http.ResponseWriter, r *http.Request, form eventDeleteForm) {
+	// Render page again, with errors
+	tdata := app.newTemplateData(r)
+	tdata.Form = form
+
+	events, err := app.Models.Events.GetAll()
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	tdata.Events = events
+	app.render(w, r, http.StatusUnprocessableEntity, "eventDelete.tmpl", tdata)
+}
+
 func (app *Application) eventsDeletePost(w http.ResponseWriter, r *http.Request) {
 	var form eventDeleteForm
 
@@ -147,17 +165,7 @@ func (app *Application) eventsDeletePost(w http.ResponseWriter, r *http.Request)
 	form.CheckField(form.Event != "", "event", "You must select an event")
 	if !form.Valid() {
 		// Render page again, with errors
-		tdata := app.newTemplateData(r)
-		tdata.Form = form
-
-		events, err := app.Models.Events.GetAll()
-		if err != nil {
-			app.serverError(w, r, err)
-			return
-		}
-
-		tdata.Events = events
-		app.render(w, r, http.StatusUnprocessableEntity, "eventDelete.tmpl", tdata)
+		app.renderEventDeleteErrors(w, r, form)
 		return
 	}
 
@@ -167,18 +175,7 @@ func (app *Application) eventsDeletePost(w http.ResponseWriter, r *http.Request)
 		if errors.Is(err, models.ErrRecordNotFound) {
 			// Render page again, with errors
 			form.AddFieldError("event", "Event not found")
-
-			tdata := app.newTemplateData(r)
-			tdata.Form = form
-
-			events, err := app.Models.Events.GetAll()
-			if err != nil {
-				app.serverError(w, r, err)
-				return
-			}
-
-			tdata.Events = events
-			app.render(w, r, http.StatusUnprocessableEntity, "eventDelete.tmpl", tdata)
+			app.renderEventDeleteErrors(w, r, form)
 			return
 		}
 
@@ -187,7 +184,20 @@ func (app *Application) eventsDeletePost(w http.ResponseWriter, r *http.Request)
 	}
 
 	photoPath := path.Join(app.Config.StorageDir, "photos", form.Event)
+	// Prevent path traversal
+	if !app.InAllowedPath(photoPath, path.Join(app.Config.StorageDir, "photos")) {
+		form.AddFieldError("event", "Event is not valid")
+		app.renderEventDeleteErrors(w, r, form)
+		return
+	}
+
 	thumbPath := path.Join(app.Config.StorageDir, "thumbnails", form.Event)
+	// Prevent path traversal
+	if !app.InAllowedPath(thumbPath, path.Join(app.Config.StorageDir, "thumbnails")) {
+		form.AddFieldError("event", "Event is not valid")
+		app.renderEventDeleteErrors(w, r, form)
+		return
+	}
 
 	err = os.RemoveAll(thumbPath)
 	if err != nil {
