@@ -74,7 +74,7 @@ nav a.live:hover {
 
 .photo-grid-item {
   max-height: 20vh;
-  max-width: 40vw;
+  max-width: 500px; /*max-content not working in chrome, so use 500px, which is thumbnail max width*/
   object-fit: cover;
   flex-grow: 1;
 }
@@ -191,6 +191,7 @@ summary:focus, summary:hover {
     .photo-grid-item {
       max-height: 15vh;
       max-width: 90vw;
+      border-width: 3px;
       object-fit: cover;
       flex-grow: 1;
     }
@@ -205,6 +206,14 @@ summary:focus, summary:hover {
         height: 90vw;
         width: 100%;
         margin: 0;
+    }
+
+    .photo:hover {
+        box-shadow:  0 4px 8px 4px rgba(0,0,0,0.2);
+        -webkit-transform: none;
+        transform: none;
+        transition: none;
+        will-change: unset;
     }
  
     h2 {
