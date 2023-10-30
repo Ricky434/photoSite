@@ -189,7 +189,7 @@ summary:focus, summary:hover {
     }
 
     .photo-grid-item {
-      max-height: 30vh;
+      max-height: 15vh;
       max-width: 90vw;
       object-fit: cover;
       flex-grow: 1;
