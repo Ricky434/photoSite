@@ -38,6 +38,7 @@ var functions = template.FuncMap{
 	"isVideo": func(f string) bool { return slices.Contains(models.VideoExtensions, strings.ToLower(path.Ext(f))) },
 	"Day":     func(d time.Time) string { return d.Format(time.DateOnly) },
 	"DayWords": func(d time.Time) string { return d.Format("Monday, 02 January 2006") },
+	"Time": func(d time.Time) string { loc, _:= time.LoadLocation("Europe/Rome"); return d.In(loc).Format("15:04") },
 }
 
 func NewTemplateCache() (map[string]*template.Template, error) {

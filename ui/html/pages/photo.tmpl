@@ -1,36 +1,7 @@
 {{define "title"}}Photo{{end}} <!--Da cambiare-->
 
 {{define "main"}}
-    <h2>Foto wow</h2>
-    <div class="photo-map-info-grid">
-        {{if isVideo .Photo.FileName}}
-         <video controls class="FullPhoto">
-            <source src="/storage/photos/{{.Event.Name}}/{{.Photo.FileName}}" type="video/mp4">
-            Your browser does not support the video tag.
-        </video> 
-        {{else}}
-        <img src="/storage/photos/{{.Event.Name}}/{{.Photo.FileName}}" alt="immagine super wow" class="FullPhoto"/>
-        {{end}}
-
-        {{if .Photo.Latitude}}
-        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-         <div id="map"></div>
-         {{end}}
-
-        <div class="photoInfo">
-            <span class="infoItem">Gita: {{.Event.Name}}</span>
-            {{with .Photo.TakenAt}}
-            <span class="infoItem">Scattata il: {{.}}</span>
-            {{end}}
-            {{with .Photo.Latitude}}
-            <span class="infoItem">Latitudine: <span id="latitude">{{.}}</span></span>
-            {{end}}
-            {{with .Photo.Longitude}}
-            <span class="infoItem">Longitudine: <span id="longitude">{{.}}</span></span>
-            {{end}}
-        </div>
-    </div>
+    <h2>{{.Event.Name}}{{with .Photo.TakenAt}}, scattata alle {{Time .}}{{end}}</h2>
     <div class="prevNext">
         {{with .Photo.PreviousFile}}
         <div class="prev-photo"><a href="/photos/view/{{.}}" style="display: contents;">Previous</a></div>
@@ -38,5 +9,33 @@
         {{with .Photo.NextFile}}
         <div class="next-photo"><a href="/photos/view/{{.}}" style="display: contents;">Next</a></div>
         {{end}}
+    </div>
+    <div class="photo-map-info-grid">
+        {{if isVideo .Photo.FileName}}
+         <video controls class="FullPhoto">
+            <source src="/storage/photos/{{.Event.Name}}/{{.Photo.FileName}}" type="video/mp4">
+            Your browser does not support the video tag.
+        </video> 
+        {{else}}
+        <script src="https://unpkg.com/iv-viewer/dist/iv-viewer.js"></script>
+        <link rel="stylesheet" href="https://unpkg.com/iv-viewer/dist/iv-viewer.css">
+        <img src="/storage/photos/{{.Event.Name}}/{{.Photo.FileName}}" alt="immagine super wow" id="FullPhoto"/>
+        {{end}}
+
+        {{if .Photo.Latitude}}
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+        <div class=map-stuff>
+         <div id="map"></div>
+        <div class="photoInfo">
+            {{with .Photo.Latitude}}
+            <span class="infoItem">Latitudine: <span id="latitude">{{.}}</span></span>
+            {{end}}
+            {{with .Photo.Longitude}}
+            <span class="infoItem">Longitudine: <span id="longitude">{{.}}</span></span>
+            {{end}}
+        </div>
+        </div>
+         {{end}}
     </div>
 {{end}}

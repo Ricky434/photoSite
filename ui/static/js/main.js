@@ -147,3 +147,14 @@ if (lat != null && lon != null) {
     map.setView([lat, lon], 15);
     marker.bindPopup("<b>Hello world!</b><br>I am a popup.");
 }
+
+// Zoom
+image = document.getElementById("FullPhoto")
+if (image != null) {
+    const viewer = new ImageViewer.FullScreenViewer();
+    image.addEventListener("click", function(ev) {
+    const imgSrc = image.src;
+    const highResolutionImage = image.getAttribute("data-high-res-src");
+    viewer.show(imgSrc, highResolutionImage);
+  });
+}
