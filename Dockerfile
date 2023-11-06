@@ -1,10 +1,10 @@
-FROM golang:1.21
+FROM golang:alpine
 WORKDIR /usr/src/app
 COPY go.mod go.sum ./
 RUN go mod download && go mod verify
 
 RUN go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
-RUN apt-get update && apt-get --assume-yes install exiftool imagemagick
+RUN apk add --no-cache exiftool imagemagick ffmpeg
 
 COPY . .
 RUN go build -v -o /usr/local/bin/app_cli ./cmd/cli/
