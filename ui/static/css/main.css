@@ -60,14 +60,6 @@ nav a.live:hover {
   border-color: revert;
 }
 
-.photo:hover {
-  box-shadow: 0 8px 16px 4px rgba(0,0,0,0.4);
-  -webkit-transform: scale(1.02);
-    transform: scale(1.02);
-  transition: all 0.2s ease-in-out;
-  will-change: transform;
-}
-
 .photo-flex-item {
   max-height: 30vh;
 }
@@ -194,6 +186,7 @@ summary:focus, summary:hover {
       border-width: 3px;
       object-fit: cover;
       flex-grow: 1;
+      border-width: 3px;
     }
     
     .photo-map-info-grid {

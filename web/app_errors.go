@@ -21,6 +21,7 @@ func (app *Application) serverError(w http.ResponseWriter, r *http.Request, err 
 }
 
 // Like server error, but with code 200 so that htmx can show it
+// Not used
 func (app *Application) serverErrorHTMX(w http.ResponseWriter, r *http.Request, err error) {
 	app.logError(r, err)
 
@@ -33,6 +34,7 @@ func (app *Application) clientError(w http.ResponseWriter, status int) {
 }
 
 // Like server error, but with code 200 so that htmx can show it
+// Not used
 func (app *Application) clientErrorHTMX(w http.ResponseWriter, status int) {
 	http.Error(w, http.StatusText(status), http.StatusOK)
 }

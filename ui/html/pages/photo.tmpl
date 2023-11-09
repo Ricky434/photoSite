@@ -12,7 +12,7 @@
     </div>
     <div class="photo-map-info-grid">
         {{if isVideo .Photo.FileName}}
-         <video controls class="FullPhoto">
+         <video controls id="FullPhoto">
             <source src="/storage/photos/{{.Event.Name}}/{{.Photo.FileName}}" type="video/mp4">
             Your browser does not support the video tag.
         </video> 

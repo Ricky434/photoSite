@@ -34,8 +34,7 @@ func (app *Application) Routes() http.Handler {
 
 	router.Handler(http.MethodGet, "/", protected.ThenFunc(app.homePage))
 	router.Handler(http.MethodGet, "/events/view/:name", protected.ThenFunc(app.eventPage))
-	router.Handler(http.MethodGet, "/photoList", protected.ThenFunc(app.photoList))
-	router.Handler(http.MethodGet, "/photos/view/:file", protected.ThenFunc(app.photoPage)) // rischio conflitto se esiste evento con nome "view"
+	router.Handler(http.MethodGet, "/photos/view/:file", protected.ThenFunc(app.photoPage))
 	router.Handler(http.MethodPost, "/user/logout", protected.ThenFunc(app.userLogout))
 	router.Handler(http.MethodPost, "/photos/download", protected.ThenFunc(app.photoDownload))
 	router.Handler(http.MethodGet, "/events/download/:name", protected.ThenFunc(app.eventDownload))

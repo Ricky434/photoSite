@@ -14,7 +14,8 @@ type PhotoModelInterface interface {
 	Delete(id int) error
 	DeleteByFile(file string) error
 	GetByFile(file string) (*Photo, error)
-	GetAll(event *int, filters data.Filters) ([]*Photo, data.Metadata, error)
+	GetFiltered(event *int, filters data.Filters) ([]*Photo, data.Metadata, error) // Not used
+	GetAll(event *int) ([]*Photo, error)
 	Summary(n int) ([]*Photo, error)
 }
 
@@ -158,7 +159,57 @@ func (m *PhotoModel) GetByFile(file string) (*Photo, error) {
 	return &photo, nil
 }
 
-func (m *PhotoModel) GetAll(event *int, filters data.Filters) ([]*Photo, data.Metadata, error) {
+func (m *PhotoModel) GetAll(event *int) ([]*Photo, error) {
+	query := `
+    SELECT photos.id, file_name, created_at, taken_at, latitude, longitude, event
+    FROM photos LEFT JOIN events ON event = events.id
+    WHERE event = $1 OR $1 IS NULL
+    ORDER BY taken_at ASC, photos.id`
+	// IMPORTANT: the order by photos.id is necessary because in case of ties in ordering
+	// posgres makes no guarantee about what the ordering will be, so records could be
+	// seen as "moving around". Thus, we need an attribute that cannot be tied
+
+	args := []any{newNullInt(event)}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	rows, err := m.DB.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	photos := []*Photo{}
+
+	for rows.Next() {
+		var photo Photo
+
+		err := rows.Scan(
+			&photo.ID,
+			&photo.FileName,
+			&photo.CreatedAt,
+			&photo.TakenAt,
+			&photo.Latitude,
+			&photo.Longitude,
+			&photo.Event,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		photos = append(photos, &photo)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return photos, nil
+}
+
+func (m *PhotoModel) GetFiltered(event *int, filters data.Filters) ([]*Photo, data.Metadata, error) {
 	query := fmt.Sprintf(`
     SELECT COUNT(*) OVER(), photos.id, file_name, created_at, taken_at, latitude, longitude, event
     FROM photos LEFT JOIN events ON event = events.id

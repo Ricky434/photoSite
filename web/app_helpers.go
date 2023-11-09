@@ -39,6 +39,7 @@ func (app *Application) render(w http.ResponseWriter, r *http.Request, status in
 }
 
 // Render without base and partial templates
+// Not used
 func (app *Application) renderRaw(w http.ResponseWriter, r *http.Request, status int, page string, data *TemplateData) {
 	ts, ok := app.TemplateCache[page]
 	if !ok {
@@ -134,6 +135,7 @@ func (app *Application) readInt(qs url.Values, key string, defaultValue int, v *
 	return i
 }
 
+// Not used
 func (app *Application) readCSV(qs url.Values, key string, defaultValue []string) []string {
 	csv := qs.Get(key)
 

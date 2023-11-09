@@ -6,7 +6,15 @@
 <h4>{{with .Event.Date}}{{DayWords .}}{{else}}Nessuna data{{end}}</h4>
 <div id="dwl-event"><a href="/events/download/{{.Event.Name}}" download="{{.Event.Name}}.zip">Download all photos</a></div>
 </div>
-<div class="photo-grid" hx-swap="innerHTML" hx-get="/photoList?event={{.Event.ID}}" hx-trigger="revealed"> <!-- htmx -->
+<div class="photo-grid">
+    {{if gt (len .Photos) 0}}
+    {{range .Photos}}
+        <a href="/photos/view/{{.FileName}}" style="display: contents;">
+            <img src="/storage/thumbnails/{{$.Event.Name}}/{{.ThumbName}}" alt="immagine super wow"
+                class="photo-grid-item photo" oncontextmenu="toggleSelected(this, {{.FileName}}); return false;" />
+        </a>
+    {{end}}
+    {{end}}
 </div>
 <div class="selectedButtons">
     <button type="button" id="downloadButton" class="hidden" onclick="downloadSelected({{.Event.Name}}, {{.CSRFToken}})">Download selected</button>

@@ -21,6 +21,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
+// Not used
 func (app *Application) photoList(w http.ResponseWriter, r *http.Request) {
 	var input struct {
 		Event int
@@ -62,7 +63,7 @@ func (app *Application) photoList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	photos, metadata, err := app.Models.Photos.GetAll(&input.Event, input.Filters)
+	photos, metadata, err := app.Models.Photos.GetFiltered(&input.Event, input.Filters)
 	if err != nil {
 		app.serverErrorHTMX(w, r, err)
 		return

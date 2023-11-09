@@ -5,13 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math"
 	"net/http"
 	"os"
 	"path"
-	"sitoWow/internal/data"
 	"sitoWow/internal/data/models"
 	"sitoWow/internal/validator"
+	"slices"
 	"strings"
 	"time"
 
@@ -32,7 +31,24 @@ func (app *Application) eventPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	photos, err := app.Models.Photos.GetAll(&event.ID)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	// Set thubnail names, replace video extensions with jpg extension (for thumbnail path)
+	for i := range photos {
+		if slices.Contains(models.VideoExtensions, strings.ToLower(path.Ext(photos[i].FileName))) {
+			// Thumbnail for video is video filename(with extension)+".jpg"
+			photos[i].ThumbName = fmt.Sprintf("%s%s", path.Base(photos[i].FileName), ".jpg")
+		} else {
+			photos[i].ThumbName = photos[i].FileName
+		}
+	}
+
 	tdata.Event = event
+	tdata.Photos = photos
 
 	app.render(w, r, http.StatusOK, "event.tmpl", tdata)
 }
@@ -238,13 +254,7 @@ func (app *Application) eventDownload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	filters := data.Filters{
-		Page:     1,
-		PageSize: math.MaxInt32,
-		SortSafelist: []string{"taken_at"},
-		Sort: "taken_at",
-	}
-	photos, _, err := app.Models.Photos.GetAll(&event.ID, filters)
+	photos, err := app.Models.Photos.GetAll(&event.ID)
 
 	// ---- Zip files
 	tmpDir := path.Join(app.Config.StorageDir, "tmp")
