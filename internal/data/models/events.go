@@ -11,7 +11,6 @@ type EventModelInterface interface {
 	Insert(event *Event) error
 	Update(event *Event) error
 	Delete(name string) error
-	GetByName(name string) (*Event, error)
 	GetByID(id int) (*Event, error)
 	GetAll() ([]*Event, error)
 }
@@ -100,30 +99,6 @@ func (m *EventModel) Delete(name string) error {
 	}
 
 	return nil
-}
-
-func (m *EventModel) GetByName(name string) (*Event, error) {
-	query := `
-    SELECT id, name, day, version
-    FROM events
-    WHERE name = $1
-    `
-
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
-	var event Event
-
-	err := m.DB.QueryRowContext(ctx, query, name).Scan(&event.ID, &event.Name, &event.Date, &event.Version)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, ErrRecordNotFound
-		}
-
-		return nil, err
-	}
-
-	return &event, nil
 }
 
 func (m *EventModel) GetByID(id int) (*Event, error) {
