@@ -14,6 +14,7 @@ import (
 	"sitoWow/internal/data/models"
 	"sitoWow/internal/validator"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -121,7 +122,7 @@ func (app *Application) photoPage(w http.ResponseWriter, r *http.Request) {
 }
 
 type photoUploadForm struct {
-	Event               string `form:"event"`
+	Event               int `form:"event"`
 	validator.Validator `form:"-"`
 }
 
@@ -163,16 +164,20 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	form.Event = r.MultipartForm.Value["event"][0]
+	form.Event, err = strconv.Atoi(r.MultipartForm.Value["event"][0])
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
 
-	form.CheckField(form.Event != "", "event", "This field must not be empty")
+	form.CheckField(form.Event != 0, "event", "This field must not be zero")
 	if !form.Valid() {
 		app.renderPhotosUploadErrors(w, r, form)
 		return
 	}
 
-	// Retrieve event id
-	event, err := app.Models.Events.GetByName(form.Event)
+	// Retrieve event
+	event, err := app.Models.Events.GetByID(form.Event)
 	if err != nil {
 		if errors.Is(err, models.ErrRecordNotFound) {
 			// Render page again, with errors
@@ -186,7 +191,7 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Check if photos event directory is allowed (prevent path traversal)
-	photosDir := path.Join(app.Config.StorageDir, "photos", event.Name)
+	photosDir := path.Join(app.Config.StorageDir, "photos", strconv.Itoa(event.ID))
 	if !app.InAllowedPath(photosDir, path.Join(app.Config.StorageDir, "photos")) {
 		form.AddFieldError("event", "Event is not valid")
 		app.renderPhotosUploadErrors(w, r, form)
@@ -203,7 +208,7 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Check if photos event directory is allowed (prevent path traversal)
-	thumbsDir := path.Join(app.Config.StorageDir, "thumbnails", event.Name)
+	thumbsDir := path.Join(app.Config.StorageDir, "thumbnails", strconv.Itoa(event.ID))
 	if !app.InAllowedPath(thumbsDir, path.Join(app.Config.StorageDir, "thumbnails")) {
 		form.AddFieldError("event", "Event is not valid")
 		app.renderPhotosUploadErrors(w, r, form)
@@ -243,7 +248,7 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 
-		newFilePath := path.Join(app.Config.StorageDir, "photos", event.Name, file.Filename)
+		newFilePath := path.Join(photosDir, file.Filename)
 
 		destination, err := os.Create(newFilePath)
 		if err != nil {
@@ -324,7 +329,7 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 			magickCmd = exec.Command(
 				"mogrify",
 				"-auto-orient",
-				"-path", path.Join(app.Config.StorageDir, "thumbnails", event.Name),
+				"-path", thumbsDir,
 				"-thumbnail", "500x500",
 				newFilePath,
 			)
@@ -334,7 +339,7 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 				"-resize", "500x500>",
 				fmt.Sprintf("%s[1]", newFilePath),
 				// Thumbnail for video is video filename(with extension)+".jpg"
-				path.Join(app.Config.StorageDir, "thumbnails", event.Name, fmt.Sprintf("%s%s", path.Base(newFilePath), ".jpg")),
+				path.Join(thumbsDir, fmt.Sprintf("%s%s", path.Base(newFilePath), ".jpg")),
 			)
 		}
 
@@ -362,7 +367,7 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 func (app Application) photoDelete(w http.ResponseWriter, r *http.Request) {
 	var input struct {
 		Token  string   `json:"csrf_token"` // only needed by readJSON since it checks for unknown keys
-		Event  string   `json:"event"`
+		Event  int   `json:"event"`
 		Photos []string `json:"photos"`
 	}
 
@@ -375,14 +380,14 @@ func (app Application) photoDelete(w http.ResponseWriter, r *http.Request) {
 	missingFiles := []string{}
 
 	for _, photo := range input.Photos {
-		photoPath := path.Join(app.Config.StorageDir, "photos", input.Event, photo)
+		photoPath := path.Join(app.Config.StorageDir, "photos", strconv.Itoa(input.Event), photo)
 		// Prevent path traversal
 		if !app.InAllowedPath(photoPath, path.Join(app.Config.StorageDir, "photos")) {
 			app.clientError(w, http.StatusBadRequest)
 			return
 		}
 
-		thumbPath := path.Join(app.Config.StorageDir, "thumbnails", input.Event)
+		thumbPath := path.Join(app.Config.StorageDir, "thumbnails", strconv.Itoa(input.Event))
 		// Prevent path traversal
 		if !app.InAllowedPath(thumbPath, path.Join(app.Config.StorageDir, "thumbnails")) {
 			app.clientError(w, http.StatusBadRequest)
@@ -424,7 +429,7 @@ func (app Application) photoDelete(w http.ResponseWriter, r *http.Request) {
 func (app Application) photoDownload(w http.ResponseWriter, r *http.Request) {
 	var input struct {
 		Token  string   `json:"csrf_token"` // only needed by readJSON since it checks for unknown keys
-		Event  string   `json:"event"`
+		Event  int   `json:"event"`
 		Photos []string `json:"photos"`
 	}
 
@@ -450,7 +455,7 @@ func (app Application) photoDownload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(input.Photos) == 1 {
-		photoPath := path.Join(app.Config.StorageDir, "photos", input.Event, input.Photos[0])
+		photoPath := path.Join(app.Config.StorageDir, "photos", strconv.Itoa(input.Event), input.Photos[0])
 		// Prevent path traversal
 		if !app.InAllowedPath(photoPath, path.Join(app.Config.StorageDir, "photos")) {
 			app.clientError(w, http.StatusBadRequest)
@@ -503,7 +508,7 @@ func (app Application) photoDownload(w http.ResponseWriter, r *http.Request) {
 
 	// Add photos to zip
 	for _, photo := range input.Photos {
-		photoPath := path.Join(app.Config.StorageDir, "photos", input.Event, photo)
+		photoPath := path.Join(app.Config.StorageDir, "photos", strconv.Itoa(input.Event), photo)
 		// Prevent path traversal
 		if !app.InAllowedPath(photoPath, path.Join(app.Config.StorageDir, "photos")) {
 			app.clientError(w, http.StatusBadRequest)

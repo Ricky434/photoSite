@@ -11,6 +11,7 @@ import (
 	"sitoWow/internal/data/models"
 	"sitoWow/internal/validator"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -21,12 +22,21 @@ import (
 func (app *Application) eventPage(w http.ResponseWriter, r *http.Request) {
 	params := httprouter.ParamsFromContext(r.Context())
 
-	name := params.ByName("name")
+	id, err := strconv.Atoi(params.ByName("id"))
+	if err != nil {
+		app.clientError(w, http.StatusNotFound)
+		return
+	}
 
 	tdata := app.newTemplateData(r)
 
-	event, err := app.Models.Events.GetByName(name)
+	event, err := app.Models.Events.GetByID(id)
 	if err != nil {
+		if errors.Is(err, models.ErrRecordNotFound) {
+			app.clientError(w, http.StatusNotFound)
+			return
+		}
+
 		app.serverError(w, r, err)
 		return
 	}
@@ -123,15 +133,6 @@ func (app *Application) eventsCreatePost(w http.ResponseWriter, r *http.Request)
 
 	err = app.Models.Events.Insert(event)
 	if err != nil {
-		if errors.Is(err, models.ErrDuplicateName) {
-			form.AddFieldError("name", "This name already exists")
-
-			data := app.newTemplateData(r)
-			data.Form = form
-			app.render(w, r, http.StatusUnprocessableEntity, "eventCreate.tmpl", data)
-			return
-		}
-
 		app.serverError(w, r, err)
 		return
 	}
@@ -142,7 +143,7 @@ func (app *Application) eventsCreatePost(w http.ResponseWriter, r *http.Request)
 }
 
 type eventDeleteForm struct {
-	Event               string `form:"event"`
+	Event               int `form:"event"`
 	validator.Validator `form:"-"`
 }
 
@@ -184,7 +185,7 @@ func (app *Application) eventsDeletePost(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	form.CheckField(form.Event != "", "event", "You must select an event")
+	form.CheckField(form.Event != 0, "event", "You must select an event")
 	if !form.Valid() {
 		// Render page again, with errors
 		app.renderEventDeleteErrors(w, r, form)
@@ -205,7 +206,7 @@ func (app *Application) eventsDeletePost(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	photoPath := path.Join(app.Config.StorageDir, "photos", form.Event)
+	photoPath := path.Join(app.Config.StorageDir, "photos", strconv.Itoa(form.Event))
 	// Prevent path traversal
 	if !app.InAllowedPath(photoPath, path.Join(app.Config.StorageDir, "photos")) {
 		form.AddFieldError("event", "Event is not valid")
@@ -213,7 +214,7 @@ func (app *Application) eventsDeletePost(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	thumbPath := path.Join(app.Config.StorageDir, "thumbnails", form.Event)
+	thumbPath := path.Join(app.Config.StorageDir, "thumbnails", strconv.Itoa(form.Event))
 	// Prevent path traversal
 	if !app.InAllowedPath(thumbPath, path.Join(app.Config.StorageDir, "thumbnails")) {
 		form.AddFieldError("event", "Event is not valid")
@@ -241,9 +242,13 @@ func (app *Application) eventsDeletePost(w http.ResponseWriter, r *http.Request)
 func (app *Application) eventDownload(w http.ResponseWriter, r *http.Request) {
 	params := httprouter.ParamsFromContext(r.Context())
 
-	name := params.ByName("name")
+	id, err := strconv.Atoi(params.ByName("id"))
+	if err != nil {
+		app.clientError(w, http.StatusNotFound)
+		return
+	}
 
-	event, err := app.Models.Events.GetByName(name)
+	event, err := app.Models.Events.GetByID(id)
 	if err != nil {
 		if errors.Is(err, models.ErrRecordNotFound) {
 			app.clientError(w, http.StatusNotFound)
@@ -285,7 +290,7 @@ func (app *Application) eventDownload(w http.ResponseWriter, r *http.Request) {
 
 	// Add photos to zip
 	for _, photo := range photos {
-		photoPath := path.Join(app.Config.StorageDir, "photos", name, photo.FileName)
+		photoPath := path.Join(app.Config.StorageDir, "photos", strconv.Itoa(event.ID), photo.FileName)
 		// Prevent path traversal
 		if !app.InAllowedPath(photoPath, path.Join(app.Config.StorageDir, "photos")) {
 			app.clientError(w, http.StatusBadRequest)
@@ -319,7 +324,7 @@ func (app *Application) eventDownload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/zip")
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s.zip\"", name))
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s.zip\"", event.Name))
 
 	// There is probably a better way
 	file, err := os.ReadFile(tmpPath)

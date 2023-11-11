@@ -7,12 +7,12 @@
     {{$photos := index $.PhotosByEvent $e.ID}}
     {{if gt (len $photos) 0}}
     <details open="">
-        <summary class="event-name">{{$e.Name}}{{with $e.Date}} [{{Day .}}]{{end}}<a href="/events/view/{{$e.Name}}"
+        <summary class="event-name">{{$e.Name}}{{with $e.Date}} [{{Day .}}]{{end}}<a href="/events/view/{{$e.ID}}"
                 class="event-link">Altre foto ></a></summary>
         <div class="content photo-flex">
             {{range $photos}}
             <a href="/photos/view/{{.FileName}}" style="display: contents;">
-                <img src="/storage/thumbnails/{{$e.Name}}/{{.ThumbName}}" alt="immagine super wow"
+                <img src="/storage/thumbnails/{{$e.ID}}/{{.ThumbName}}" alt="immagine super wow"
                     class="photo-flex-item photo" />
             </a>
             {{end}}

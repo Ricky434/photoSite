@@ -12,13 +12,14 @@ import (
 	"path"
 	"sitoWow/internal/data/models"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 )
 
 type insertPhotosCommand struct {
 	path       string
-	event      string
+	event      int
 	storageDir string
 	fs         *flag.FlagSet
 }
@@ -29,7 +30,7 @@ func (c *insertPhotosCommand) Init(args []string) error {
 		return err
 	}
 
-	if c.event == "" || c.path == "" || c.storageDir == "" {
+	if c.event == 0 || c.path == "" || c.storageDir == "" {
 		c.fs.Usage()
 		fmt.Println()
 
@@ -47,7 +48,7 @@ func (c *insertPhotosCommand) Run(db *sql.DB) error {
 	m := models.New(db)
 
 	// Create photos and event directories if not present
-	photosDir := path.Join(c.storageDir, "photos", c.event)
+	photosDir := path.Join(c.storageDir, "photos", strconv.Itoa(c.event))
 	if _, err := os.Stat(photosDir); errors.Is(err, os.ErrNotExist) {
 		err := os.MkdirAll(photosDir, os.ModePerm)
 		if err != nil {
@@ -56,7 +57,7 @@ func (c *insertPhotosCommand) Run(db *sql.DB) error {
 	}
 
 	// Create thumbnails directory if not present
-	thumbsDir := path.Join(c.storageDir, "thumbnails", c.event)
+	thumbsDir := path.Join(c.storageDir, "thumbnails", strconv.Itoa(c.event))
 	if _, err := os.Stat(thumbsDir); errors.Is(err, os.ErrNotExist) {
 		err := os.MkdirAll(thumbsDir, os.ModePerm)
 		if err != nil {
@@ -127,7 +128,7 @@ func (c *insertPhotosCommand) insertFile(m *models.Models, file_path string, isV
 	}
 
 	// Retrieve event id
-	event, err := m.Events.GetByName(c.event)
+	event, err := m.Events.GetByID(c.event)
 	if err != nil {
 		if errors.Is(err, models.ErrRecordNotFound) {
 			return fmt.Errorf("Event does not exist")
@@ -164,7 +165,7 @@ func (c *insertPhotosCommand) insertFile(m *models.Models, file_path string, isV
 	}
 	defer source.Close()
 
-	eventDir := path.Join(c.storageDir, "photos", c.event)
+	eventDir := path.Join(c.storageDir, "photos", strconv.Itoa(c.event))
 
 	// Open destination
 	destination, err := os.Create(path.Join(eventDir, photo.FileName))
@@ -188,7 +189,7 @@ func (c *insertPhotosCommand) insertFile(m *models.Models, file_path string, isV
 		magickCmd = exec.Command(
 			"mogrify",
 			"-auto-orient",
-			"-path", path.Join(c.storageDir, "thumbnails", c.event),
+			"-path", path.Join(c.storageDir, "thumbnails", strconv.Itoa(c.event)),
 			"-thumbnail", "500x500",
 			file_path,
 		)
@@ -198,7 +199,7 @@ func (c *insertPhotosCommand) insertFile(m *models.Models, file_path string, isV
 			"-resize", "500x500>",
 			fmt.Sprintf("%s[1]", file_path),
 			// Thumbnail for video is video filename(with extension)+".jpg"
-			path.Join(c.storageDir, "thumbnails", c.event, fmt.Sprintf("%s%s", path.Base(file_path), ".jpg")),
+			path.Join(c.storageDir, "thumbnails", strconv.Itoa(c.event), fmt.Sprintf("%s%s", path.Base(file_path), ".jpg")),
 		)
 	}
 
@@ -225,7 +226,7 @@ func newInsertPhotosCommand() *insertPhotosCommand {
 		fs: flag.NewFlagSet("insertPhotos", flag.ContinueOnError),
 	}
 	c.fs.StringVar(&c.path, "path", "", "Photos location (folder or single file)")
-	c.fs.StringVar(&c.event, "event", "", "Event name")
+	c.fs.IntVar(&c.event, "event", 0, "Event id")
 	c.fs.StringVar(&c.storageDir, "storage-dir", "./storage", "Photos storage directory")
 
 	return c

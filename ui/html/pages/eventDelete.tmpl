@@ -12,7 +12,7 @@
         {{end}}
         <select value='{{.Form.Event}}' type="event" name="event">
             {{range .Events}}
-            <option value="{{.Name}}">{{.Name}}{{with .Date}} [{{Day .}}]{{end}}</option>
+            <option value="{{.ID}}">{{.Name}}{{with .Date}} [{{Day .}}]{{end}}</option>
             {{end}}
         </select>
     </div>

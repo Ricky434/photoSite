@@ -55,12 +55,12 @@ func (c *eventFoldersIDCommand) Run(db *sql.DB) error {
 	for _, e := range events {
 		err := os.Rename(path.Join(photosDir, e.Name), path.Join(photosDir, strconv.Itoa(e.ID)))
 		if err != nil {
-			return fmt.Errorf("%s. Path: %s", err.Error(), path.Join(photosDir, e.Name))
+			fmt.Printf("%s. Path: %s\n", err.Error(), path.Join(photosDir, e.Name))
 		}
 
 		err = os.Rename(path.Join(thumbsDir, e.Name), path.Join(thumbsDir, strconv.Itoa(e.ID)))
 		if err != nil {
-			return fmt.Errorf("%s. Path: %s", err.Error(), path.Join(thumbsDir, e.Name))
+			fmt.Printf("%s. Path: %s\n", err.Error(), path.Join(thumbsDir, e.Name))
 		}
 	}
 
