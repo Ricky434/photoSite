@@ -87,12 +87,11 @@ summary:focus, summary:hover {
     padding: inherit;
 }
 
-#event-header {
+.event-header {
     display: flex;
-    align-items: center;
+    align-items: first baseline;
 }
-#dwl-event {
-    margin-top:12px;
+.event-header :last-child {
     margin-left: auto;
 }
 

@@ -142,6 +142,106 @@ func (app *Application) eventsCreatePost(w http.ResponseWriter, r *http.Request)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
+func (app *Application) eventsUpdatePage(w http.ResponseWriter, r *http.Request) {
+	params := httprouter.ParamsFromContext(r.Context())
+
+	id, err := strconv.Atoi(params.ByName("id"))
+	if err != nil {
+		app.clientError(w, http.StatusNotFound)
+		return
+	}
+
+	event, err := app.Models.Events.GetByID(id)
+	if err != nil {
+		if errors.Is(err, models.ErrRecordNotFound) {
+			app.clientError(w, http.StatusNotFound)
+			return
+		}
+
+		app.serverError(w, r, err)
+		return
+	}
+
+	data := app.newTemplateData(r)
+	data.Form = eventCreateForm{
+		Name: event.Name,
+		Date: event.Date,
+	}
+	data.Event = event
+	app.render(w, r, http.StatusOK, "eventUpdate.tmpl", data)
+}
+
+func (app *Application) eventsUpdatePost(w http.ResponseWriter, r *http.Request) {
+	params := httprouter.ParamsFromContext(r.Context())
+
+	id, err := strconv.Atoi(params.ByName("id"))
+	if err != nil {
+		app.clientError(w, http.StatusNotFound)
+		return
+	}
+
+	event, err := app.Models.Events.GetByID(id)
+	if err != nil {
+		if errors.Is(err, models.ErrRecordNotFound) {
+			app.clientError(w, http.StatusNotFound)
+			return
+		}
+
+		app.serverError(w, r, err)
+		return
+	}
+
+	var form eventCreateForm
+
+	// TODO perche non va in errore se la data non e' giusta???
+	err = app.decodePostForm(r, &form)
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	// shouldnt be manual, should use UnmarshalJSON but it doesnt work
+	if r.FormValue("date") != "" {
+		timeDate, err := time.Parse(time.DateOnly, r.FormValue("date"))
+		if err != nil {
+			app.clientError(w, http.StatusBadRequest)
+			return
+		}
+
+		form.Date = &timeDate
+	}
+
+	event.Name = form.Name
+	event.Date = form.Date
+
+	form.CheckField(event.Name != "", "name", "This field must not be empty")
+	form.CheckField(r.FormValue("date") == "" || !form.Date.IsZero(), "date", "Date must be non zero")
+	// Try to prevent path traversal attacks
+	form.CheckField(!strings.Contains(event.Name, ".."), "name", "This field must not contain the string '..'")
+
+	if !form.Valid() {
+		data := app.newTemplateData(r)
+		data.Form = form
+		app.render(w, r, http.StatusUnprocessableEntity, "eventUpdate.tmpl", data)
+		return
+	}
+
+	err = app.Models.Events.Update(event)
+	if err != nil {
+		if errors.Is(err, models.ErrEditConflict) {
+			app.clientError(w, http.StatusConflict)
+			return
+		}
+
+		app.serverError(w, r, err)
+		return
+	}
+
+	app.SessionManager.Put(r.Context(), "flash", "Event updated successfully")
+
+	http.Redirect(w, r, fmt.Sprintf("/events/view/%d", event.ID), http.StatusSeeOther)
+}
+
 type eventDeleteForm struct {
 	Event               int `form:"event"`
 	validator.Validator `form:"-"`

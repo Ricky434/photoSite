@@ -58,9 +58,6 @@ func (m *EventModel) Update(event *Event) error {
 	err := m.DB.QueryRowContext(ctx, query, event.Name, newNullTime(event.Date), event.ID, event.Version).Scan(&event.Version)
 	if err != nil {
 		switch {
-		case err.Error() == `pq: un valore chiave duplicato viola il vincolo univoco "events_name_key"` ||
-			err.Error() == `pq: duplicate key value violates unique constraint "events_name_key"`:
-			return ErrDuplicateName
 		case errors.Is(err, sql.ErrNoRows):
 			return ErrEditConflict
 		default:

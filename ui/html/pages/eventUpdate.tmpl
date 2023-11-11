@@ -1,0 +1,26 @@
+{{define "title"}}Update Event{{end}}
+
+{{define "main"}}
+<h2>Update Event: {{.Event.Name}}{{with .Event.Date}} [{{Day .}}]{{end}}</h2>
+<form action='/events/update/{{.Event.ID}}' method='POST' novalidate>
+    <!-- Include the CSRF token -->
+    <input type='hidden' name='csrf_token' value='{{.CSRFToken}}'>
+    <div>
+        <label>Name:</label>
+        {{with .Form.FieldErrors.name}}
+            <label class='error'>{{.}}</label>
+        {{end}}
+        <input type='text' name='name' value='{{.Form.Name}}'>
+    </div>
+    <div>
+        <label>Date:</label>
+        {{with .Form.FieldErrors.date}}
+            <label class='error'>{{.}}</label>
+        {{end}}
+        <input type='date' name='date' {{with .Event.Date}}value="{{Day .}}"{{end}}>
+    </div>
+    <div>
+        <input type='submit' value='Update'>
+    </div>
+</form>
+{{end}}
