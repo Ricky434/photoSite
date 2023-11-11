@@ -71,6 +71,10 @@ function toggleSelected(e, file) {
 }
 
 function deleteSelected(event, token) {
+    if (!confirm('Sei sicuro di voler cancellare le foto?')) {
+        return
+    }
+
     var data = {
         event: event,
         photos: selected,
@@ -88,6 +92,10 @@ function deleteSelected(event, token) {
 }
 
 function downloadSelected(event, token) {
+    if (!confirm('Sei sicuro di voler cancellare le foto?')) {
+        return
+    }
+
     var data = {
         event: event,
         photos: selected,
