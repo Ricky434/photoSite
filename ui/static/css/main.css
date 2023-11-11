@@ -4,6 +4,14 @@ body {
     max-width: 80%;
 }
 
+h1 a {
+    color: white;
+}
+
+h2 a {
+    color: white;
+}
+
 nav {
     height: 3em;    
 }
