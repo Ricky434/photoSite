@@ -13,13 +13,13 @@
     <div class="photo-map-info-grid">
         {{if isVideo .Photo.FileName}}
          <video controls id="FullPhoto">
-            <source src="/storage/photos/{{.Event.Name}}/{{.Photo.FileName}}" type="video/mp4">
+            <source src="/storage/photos/{{.Event.ID}}/{{.Photo.FileName}}" type="video/mp4">
             Your browser does not support the video tag.
         </video> 
         {{else}}
         <script src="https://unpkg.com/iv-viewer/dist/iv-viewer.js"></script>
         <link rel="stylesheet" href="https://unpkg.com/iv-viewer/dist/iv-viewer.css">
-        <img src="/storage/photos/{{.Event.Name}}/{{.Photo.FileName}}" alt="immagine super wow" id="FullPhoto"/>
+        <img src="/storage/photos/{{.Event.ID}}/{{.Photo.FileName}}" alt="immagine super wow" id="FullPhoto"/>
         {{end}}
 
         {{if .Photo.Latitude}}

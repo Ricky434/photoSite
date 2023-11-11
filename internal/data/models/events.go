@@ -10,8 +10,7 @@ import (
 type EventModelInterface interface {
 	Insert(event *Event) error
 	Update(event *Event) error
-	Delete(name string) error
-	GetByName(name string) (*Event, error)
+	Delete(id int) error
 	GetByID(id int) (*Event, error)
 	GetAll() ([]*Event, error)
 }
@@ -39,11 +38,6 @@ func (m *EventModel) Insert(event *Event) error {
 
 	err := m.DB.QueryRowContext(ctx, query, event.Name, newNullTime(event.Date)).Scan(&event.ID, &event.Version)
 	if err != nil {
-		if err.Error() == `pq: un valore chiave duplicato viola il vincolo univoco "events_name_key"` ||
-			err.Error() == `pq: duplicate key value violates unique constraint "events_name_key"` {
-			return ErrDuplicateName
-		}
-
 		return err
 	}
 
@@ -77,16 +71,16 @@ func (m *EventModel) Update(event *Event) error {
 	return nil
 }
 
-func (m *EventModel) Delete(name string) error {
+func (m *EventModel) Delete(id int) error {
 	query := `
     DELETE FROM events
-    WHERE name = $1
+    WHERE id = $1
     `
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	res, err := m.DB.ExecContext(ctx, query, name)
+	res, err := m.DB.ExecContext(ctx, query, id)
 	if err != nil {
 		return err
 	}
@@ -100,30 +94,6 @@ func (m *EventModel) Delete(name string) error {
 	}
 
 	return nil
-}
-
-func (m *EventModel) GetByName(name string) (*Event, error) {
-	query := `
-    SELECT id, name, day, version
-    FROM events
-    WHERE name = $1
-    `
-
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
-	var event Event
-
-	err := m.DB.QueryRowContext(ctx, query, name).Scan(&event.ID, &event.Name, &event.Date, &event.Version)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, ErrRecordNotFound
-		}
-
-		return nil, err
-	}
-
-	return &event, nil
 }
 
 func (m *EventModel) GetByID(id int) (*Event, error) {

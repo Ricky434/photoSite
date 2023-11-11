@@ -35,6 +35,7 @@ func main() {
 		newCreateEventCommand(),
 		newInsertPhotosCommand(),
 		newCreateAdminCommand(),
+		newEventFoldersIDCommand(),
 	}
 
 	// Find command, and its index in arguments list

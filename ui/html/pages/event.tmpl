@@ -4,22 +4,22 @@
 <h2>{{.Event.Name}}</h2>
 <div id="event-header">
 <h4>{{with .Event.Date}}{{DayWords .}}{{else}}Nessuna data{{end}}</h4>
-<div id="dwl-event"><a href="/events/download/{{.Event.Name}}" download="{{.Event.Name}}.zip">Download all photos</a></div>
+<div id="dwl-event"><a href="/events/download/{{.Event.ID}}" download="{{.Event.Name}}.zip">Download all photos</a></div>
 </div>
 <div class="photo-grid">
     {{if gt (len .Photos) 0}}
     {{range .Photos}}
         <a href="/photos/view/{{.FileName}}" style="display: contents;">
-            <img src="/storage/thumbnails/{{$.Event.Name}}/{{.ThumbName}}" alt="immagine super wow"
+            <img src="/storage/thumbnails/{{$.Event.ID}}/{{.ThumbName}}" alt="immagine super wow"
                 class="photo-grid-item photo" oncontextmenu="toggleSelected(this, {{.FileName}}); return false;" />
         </a>
     {{end}}
     {{end}}
 </div>
 <div class="selectedButtons">
-    <button type="button" id="downloadButton" class="hidden" onclick="downloadSelected({{.Event.Name}}, {{.CSRFToken}})">Download selected</button>
+    <button type="button" id="downloadButton" class="hidden" onclick="downloadSelected({{.Event.ID}}, {{.CSRFToken}})">Download selected</button>
     {{if $.IsAdmin}}
-    <button type="button" id="delButton" class="hidden" onclick="deleteSelected({{.Event.Name}}, {{.CSRFToken}})">Delete selected</button>
+    <button type="button" id="delButton" class="hidden" onclick="deleteSelected({{.Event.ID}}, {{.CSRFToken}})">Delete selected</button>
     {{end}}
 </div>
 {{end}}
