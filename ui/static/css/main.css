@@ -95,6 +95,12 @@ summary:focus, summary:hover {
     margin-left: auto;
 }
 
+.photo-header {
+    display: flex;
+    align-items: first baseline;
+    gap: 10px;
+}
+
 .photo-grid {
     display: flex;
     flex-wrap:  wrap;
@@ -106,7 +112,6 @@ summary:focus, summary:hover {
 .photo-map-info-grid {
     display: grid;
     grid-template-columns: 60vw 20vw;
-    grid-template-rows: 75vh 15vh;
     gap: 20px;
 }
 

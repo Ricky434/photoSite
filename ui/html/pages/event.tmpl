@@ -3,10 +3,9 @@
 {{define "main"}}
 <div class="event-header">
      <h2>{{.Event.Name}}</h2>
-     <div><a href="/events/update/{{.Event.ID}}">Modifica</a></div>
+     <div>{{if .IsAdmin}}<a href="/events/update/{{.Event.ID}}">Modifica</a>{{end}}</div>
 </div>
 <div class="event-header">
-    <h4>{{with .Event.Date}}{{DayWords .}}{{else}}Nessuna data{{end}}</h4>
     <div><a href="/events/download/{{.Event.ID}}" download="{{.Event.Name}}.zip">Download all photos</a></div>
 </div>
 <div class="photo-grid">
