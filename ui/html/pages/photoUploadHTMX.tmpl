@@ -1,7 +1,3 @@
-{{define "title"}}Upload files{{end}}
-
-{{define "main"}}
-<h2>Upload Files</h2>
 <form id="form" hx-post='/photos/upload' hx-encoding="multipart/form-data" novalidate>
     <!-- Include the CSRF token -->
     <input type='hidden' name='csrf_token' value='{{.CSRFToken}}'>
@@ -21,6 +17,9 @@
     </div>
     <div>
         <label>Files:</label>
+        {{with .Form.FieldErrors.files}}
+            <label class='error'>{{.}}</label>
+        {{end}}
         <input type='file' name='files' multiple>
     </div>
     <button id="btn">Upload</button>
@@ -35,5 +34,3 @@
         }
     });
 </script>
-{{end}}
-

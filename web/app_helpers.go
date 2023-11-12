@@ -39,7 +39,6 @@ func (app *Application) render(w http.ResponseWriter, r *http.Request, status in
 }
 
 // Render without base and partial templates
-// Not used
 func (app *Application) renderRaw(w http.ResponseWriter, r *http.Request, status int, page string, data *TemplateData) {
 	ts, ok := app.TemplateCache[page]
 	if !ok {

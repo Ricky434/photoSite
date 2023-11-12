@@ -152,7 +152,8 @@ func (app *Application) renderPhotosUploadErrors(w http.ResponseWriter, r *http.
 	}
 
 	tdata.Events = events
-	app.render(w, r, http.StatusUnprocessableEntity, "photoUpload.tmpl", tdata)
+	// Only render form body for htmx to substitute to current one
+	app.renderRaw(w, r, http.StatusOK, "photoUploadHTMX.tmpl", tdata)
 }
 
 func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) {
@@ -228,6 +229,11 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 	// TODO server error message should tell which files have been uploaded
 	// TODO is file name at risk for path traversal?
 	files := r.MultipartForm.File["files"]
+	if len(files) == 0 {
+		form.AddFieldError("files", "You must select at least one file")
+		app.renderPhotosUploadErrors(w, r, form)
+		return
+	}
 	for _, file := range files {
 		var isVideo bool
 
@@ -361,7 +367,8 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 	}
 
 	app.SessionManager.Put(r.Context(), "flash", "Files uploaded successfully")
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	w.Header()["HX-Redirect"] = []string{fmt.Sprintf("/events/view/%d", event.ID)}
+	//http.Redirect(w, r, fmt.Sprintf("/events/view/%d", event.ID), http.StatusOK)
 }
 
 func (app Application) photoDelete(w http.ResponseWriter, r *http.Request) {

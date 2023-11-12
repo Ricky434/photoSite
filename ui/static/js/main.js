@@ -122,11 +122,6 @@ function downloadSelected(event, token) {
     });
 }
 
-function showLoadingWheel(elementId) {
-    var loadingWheel = document.getElementById(elementId);
-    loadingWheel.style.display = "block";
-}
-
 if (document.getElementById("map") == null) {
     var pmig = document.getElementsByClassName('photo-map-info-grid');
     for(i = 0; i < pmig.length; i++) {
