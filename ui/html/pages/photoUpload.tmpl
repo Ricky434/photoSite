@@ -31,7 +31,7 @@
         htmx.find('#btn').style.display = "none"
         htmx.find('#progress').setAttribute('value', evt.detail.loaded/evt.detail.total * 100)
         if (evt.detail.loaded/evt.detail.total * 100 == 100) {
-            htmx.find('#progress').setAttribute('value', null)
+            htmx.find('#progress').removeAttribute('value')
         }
     });
 </script>
