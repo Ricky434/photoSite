@@ -28,12 +28,35 @@
 </form>
 <script>
     htmx.on('#form', 'htmx:xhr:progress', function(evt) {
+        var posterr = htmx.find('#postErr')
+        if (posterr != null) {
+            posterr.remove()
+        }
+
         htmx.find('#btn').style.display = "none"
         htmx.find('#progress').setAttribute('value', evt.detail.loaded/evt.detail.total * 100)
         if (evt.detail.loaded/evt.detail.total * 100 == 100) {
             htmx.find('#progress').removeAttribute('value')
         }
     });
+
+    htmx.on("htmx:responseError", function (e) {
+        htmx.find('#progress').setAttribute('value', 0)
+        htmx.find('#btn').style.display = "inline"
+
+        var posterr = htmx.find('#postErr')
+        if (posterr == null) {
+            var f = htmx.find('#form')
+            const newDiv = document.createElement("div");
+            const text = document.createTextNode('Server Error');
+            newDiv.appendChild(text)
+            newDiv.id = 'postErr'
+            newDiv.style.display = 'inline'
+            f.parentNode.insertBefore(newDiv, f);
+        }
+
+        console.error(e);
+    })
 </script>
 {{end}}
 
