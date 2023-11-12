@@ -367,7 +367,7 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 func (app Application) photoDelete(w http.ResponseWriter, r *http.Request) {
 	var input struct {
 		Token  string   `json:"csrf_token"` // only needed by readJSON since it checks for unknown keys
-		Event  int   `json:"event"`
+		Event  int      `json:"event"`
 		Photos []string `json:"photos"`
 	}
 
@@ -387,7 +387,13 @@ func (app Application) photoDelete(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		thumbPath := path.Join(app.Config.StorageDir, "thumbnails", strconv.Itoa(input.Event))
+		thumbFile := photo
+		if slices.Contains(models.VideoExtensions, strings.ToLower(path.Ext(photo))) {
+			// Thumbnail for video is video filename(with extension)+".jpg"
+			thumbFile = fmt.Sprintf("%s%s", photo, ".jpg")
+		}
+
+		thumbPath := path.Join(app.Config.StorageDir, "thumbnails", strconv.Itoa(input.Event), thumbFile)
 		// Prevent path traversal
 		if !app.InAllowedPath(thumbPath, path.Join(app.Config.StorageDir, "thumbnails")) {
 			app.clientError(w, http.StatusBadRequest)
@@ -429,7 +435,7 @@ func (app Application) photoDelete(w http.ResponseWriter, r *http.Request) {
 func (app Application) photoDownload(w http.ResponseWriter, r *http.Request) {
 	var input struct {
 		Token  string   `json:"csrf_token"` // only needed by readJSON since it checks for unknown keys
-		Event  int   `json:"event"`
+		Event  int      `json:"event"`
 		Photos []string `json:"photos"`
 	}
 
