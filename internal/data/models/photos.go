@@ -272,10 +272,10 @@ func (m *PhotoModel) Summary(n int) ([]*Photo, error) {
         SELECT * 
         FROM photos
         WHERE photos.event = e.id 
-        ORDER BY taken_at
+        ORDER BY taken_at ASC, photos.id ASC
         LIMIT $1
     ) as l
-    ORDER BY e.day ASC, taken_at ASC
+    ORDER BY e.day ASC, taken_at ASC, l.id ASC
     `
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
