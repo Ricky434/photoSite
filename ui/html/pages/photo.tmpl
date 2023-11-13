@@ -3,7 +3,7 @@
 {{define "main"}}
     <div class="photo-header">
         <h2><a href="/events/view/{{.Event.ID}}">{{.Event.Name}}</a></h2>
-        <div>{{with .Event.Date}} {{DayWords .}}{{end}}</div>
+        <div>{{with .Photo.TakenAt}} {{DayWords .}}{{end}}</div>
     </div>
     <div class="prevNext">
         {{with .Photo.PreviousFile}}

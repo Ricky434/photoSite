@@ -48,21 +48,49 @@ function sideScroll(element,direction,speed,distance,step){
 // Select images for deletion
 var selected = []
 
-function toggleSelected(e, file) {
+function listenLeftClick() {
+    toggleSelected(this);
+    return false;
+}
+
+function toggleSelected(e) {
+    var img_src = e.getAttribute('src').split("/"); 
+    var file = img_src[img_src.length-1];
+
     var delButton = document.getElementById("delButton");
     var downloadButton = document.getElementById("downloadButton");
 
     var index = selected.indexOf(file);
+    //was already selected
     if (index !== -1) {
+        //was the only selected
         if (selected.length == 1) {
             delButton?.classList.toggle("hidden");
             downloadButton.classList.toggle("hidden");
+            images = document.getElementsByClassName("photo-grid-item");
+
+            //remove left click listener for all images
+            for (i=0; i<images.length; i++) {
+                images[i].removeEventListener('click', listenLeftClick)
+                images[i].onclick=function() {return true;};
+                //the image that is being clicked on needs to have its onclick attribute
+                //set after the current click
+                e.onclick=function() {this.onclick=()=>{return true}; return false;};
+            }
         }
         selected.splice(index, 1);
-    } else {
+    } else { //wasn't selected
+        //is the first to be selected
         if (selected.length == 0) {
             delButton?.classList.toggle("hidden");
             downloadButton.classList.toggle("hidden");
+            images = document.getElementsByClassName("photo-grid-item");
+
+            //add left click listener for all images
+            for (i=0; i<images.length; i++) {
+                images[i].addEventListener('click', listenLeftClick);
+                images[i].onclick=function() {return false;};
+            }
         }
         selected.push(file);
     }
