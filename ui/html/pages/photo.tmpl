@@ -7,10 +7,10 @@
     </div>
     <div class="prevNext">
         {{with .Photo.PreviousFile}}
-        <div class="prev-photo"><a href="/photos/view/{{.}}" style="display: contents;">Previous</a></div>
+        <div id="prev-photo"><a href="/photos/view/{{.}}" style="display: contents;">Previous</a></div>
         {{end}}
         {{with .Photo.NextFile}}
-        <div class="next-photo"><a href="/photos/view/{{.}}" style="display: contents;">Next</a></div>
+        <div id="next-photo"><a href="/photos/view/{{.}}" style="display: contents;">Next</a></div>
         {{end}}
     </div>
     <div class="photo-map-info-grid">
@@ -20,7 +20,6 @@
             Your browser does not support the video tag.
         </video> 
         {{else}}
-        <script src="https://unpkg.com/iv-viewer/dist/iv-viewer.js"></script>
         <link rel="stylesheet" href="https://unpkg.com/iv-viewer/dist/iv-viewer.css">
         <img src="/storage/photos/{{.Event.ID}}/{{.Photo.FileName}}" alt="immagine super wow" id="FullPhoto"/>
         {{end}}
@@ -41,4 +40,20 @@
         </div>
          {{end}}
     </div>
+    <script src="https://unpkg.com/iv-viewer/dist/iv-viewer.js"></script>
+    <script>
+        document.onkeydown = checkKey;
+        function checkKey(e) {
+            e = e || window.event;
+
+            if (e.keyCode == '37') {
+               // left arrow
+               document.getElementById('prev-photo')?.children[0].click();
+            }
+            else if (e.keyCode == '39') {
+               // right arrow
+               document.getElementById('next-photo')?.children[0].click();
+            }
+        }
+    </script>
 {{end}}

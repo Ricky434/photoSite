@@ -142,7 +142,7 @@ summary:focus, summary:hover {
     display: inline-block;
 }
 
-.prevNext .next-photo {
+.prevNext #next-photo {
     float: right;
 }
 

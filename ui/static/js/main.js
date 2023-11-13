@@ -1,12 +1,3 @@
-//function loginPopup() {
-//    var loginPopup = document.getElementById("loginPopup");
-//    if (loginPopup.style.display == "none") {
-//        loginPopup.style.display = "block";
-//    } else {
-//        loginPopup.style.display = "none";
-//    }
-//}
-
 var navLinks = document.querySelectorAll("nav a");
 for (var i = 0; i < navLinks.length; i++) {
 	var link = navLinks[i]
@@ -48,11 +39,6 @@ function sideScroll(element,direction,speed,distance,step){
 // Select images for deletion
 var selected = []
 
-function listenLeftClick() {
-    toggleSelected(this);
-    return false;
-}
-
 function toggleSelected(e) {
     var img_src = e.getAttribute('src').split("/"); 
     var file = img_src[img_src.length-1];
@@ -71,11 +57,7 @@ function toggleSelected(e) {
 
             //remove left click listener for all images
             for (i=0; i<images.length; i++) {
-                images[i].removeEventListener('click', listenLeftClick)
                 images[i].onclick=function() {return true;};
-                //the image that is being clicked on needs to have its onclick attribute
-                //set after the current click
-                e.onclick=function() {this.onclick=()=>{return true}; return false;};
             }
         }
         selected.splice(index, 1);
@@ -88,8 +70,10 @@ function toggleSelected(e) {
 
             //add left click listener for all images
             for (i=0; i<images.length; i++) {
-                images[i].addEventListener('click', listenLeftClick);
-                images[i].onclick=function() {return false;};
+                images[i].onclick= function(){
+		   toggleSelected(this);
+		   return false;
+		}
             }
         }
         selected.push(file);
