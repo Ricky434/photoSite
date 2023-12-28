@@ -27,7 +27,7 @@ func (app *Application) secureHeaders(next http.Handler) http.Handler {
 
 func (app *Application) staticCacheHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Cache-Control", "max-age=86400")
+		w.Header().Set("Cache-Control", "private")
 
 		next.ServeHTTP(w, r)
 	})

@@ -29,7 +29,7 @@ func (app *Application) Routes() http.Handler {
 	// LOGIN REQUIRED
 	protected := dynamic.Append(app.requireAuthentication)
 
-	// Added headers that allow files to be cached, after protected in order to overwrite the header authenticate sets
+	// Added headers that allow files to be cached only by local browser, after protected in order to overwrite the header authenticate sets
 	router.Handler(http.MethodGet, "/storage/*filepath", protected.Then(app.staticCacheHeaders(http.StripPrefix("/storage", storageServer))))
 
 	router.Handler(http.MethodGet, "/", protected.ThenFunc(app.homePage))
