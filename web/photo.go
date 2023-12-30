@@ -384,7 +384,7 @@ func (app Application) photoDelete(w http.ResponseWriter, r *http.Request) {
 	for _, photo := range input.Photos {
 		thumbFile := photo
 		// If it is a video, "photo" will be the video file name + ".jpg", so we have to remove that
-		if slices.Contains(models.VideoExtensions, strings.ToLower(path.Ext(photo))) {
+		if slices.Contains(models.VideoExtensions, strings.ToLower(path.Ext(strings.TrimSuffix(photo, ".jpg")))) {
 			photo = strings.TrimSuffix(thumbFile, ".jpg")
 		}
 
