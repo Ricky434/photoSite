@@ -272,10 +272,9 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 
 		// Extract metadata from photo
 		var ExiftoolOut []struct {
-			Latitude        *float32   `json:"GPSLatitude"`
-			Longitude       *float32   `json:"GPSLongitude"`
-			TakenAt         *time.Time `json:"DateTimeOriginal"`
-			TakenAtFallback *time.Time `json:"TrackCreateDate"`
+			Latitude  *float32   `json:"GPSLatitude"`
+			Longitude *float32   `json:"GPSLongitude"`
+			TakenAt   *time.Time `json:"DateTimeOriginal"`
 		}
 
 		cmd := exec.Command(
@@ -307,10 +306,6 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 			Latitude:  ExiftoolOut[0].Latitude,
 			Longitude: ExiftoolOut[0].Longitude,
 			Event:     event.ID,
-		}
-
-		if photo.TakenAt == nil && ExiftoolOut[0].TakenAtFallback != nil {
-			photo.TakenAt = ExiftoolOut[0].TakenAtFallback
 		}
 
 		err = app.Models.Photos.Insert(photo)
@@ -387,17 +382,17 @@ func (app Application) photoDelete(w http.ResponseWriter, r *http.Request) {
 	missingFiles := []string{}
 
 	for _, photo := range input.Photos {
+		thumbFile := photo
+		// If it is a video, "photo" will be the video file name + ".jpg", so we have to remove that
+		if slices.Contains(models.VideoExtensions, strings.ToLower(path.Ext(photo))) {
+			photo = strings.TrimSuffix(thumbFile, ".jpg")
+		}
+
 		photoPath := path.Join(app.Config.StorageDir, "photos", strconv.Itoa(input.Event), photo)
 		// Prevent path traversal
 		if !app.InAllowedPath(photoPath, path.Join(app.Config.StorageDir, "photos")) {
 			app.clientError(w, http.StatusBadRequest)
 			return
-		}
-
-		thumbFile := photo
-		if slices.Contains(models.VideoExtensions, strings.ToLower(path.Ext(photo))) {
-			// Thumbnail for video is video filename(with extension)+".jpg"
-			thumbFile = fmt.Sprintf("%s%s", photo, ".jpg")
 		}
 
 		thumbPath := path.Join(app.Config.StorageDir, "thumbnails", strconv.Itoa(input.Event), thumbFile)
