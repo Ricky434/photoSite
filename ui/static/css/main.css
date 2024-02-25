@@ -218,8 +218,14 @@ summary:focus, summary:hover {
         transition: none;
         will-change: unset;
     }
- 
+
     h2 {
         margin-top: 50px;
+    }
+
+    .photo-header {
+        display: block;
+        align-items: first baseline;
+        gap: 10px;
     }
 }

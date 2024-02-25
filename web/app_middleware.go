@@ -35,13 +35,24 @@ func (app *Application) staticCacheHeaders(next http.Handler) http.Handler {
 
 func (app *Application) logRequest(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		app.Logger.Info("request",
-			"remoteAddr", r.RemoteAddr,
-			"realIP", r.Header.Get("CF-Connecting-IP"),
-			"protocol", r.Proto,
-			"method", r.Method,
-			"URI", r.URL.RequestURI(),
-		)
+		if r.Header.Get("Cf-Ipcountry") != "IT" {
+			app.Logger.Warn("request",
+				"remoteAddr", r.RemoteAddr,
+				"Country", r.Header.Get("Cf-Ipcountry"),
+				"realIP", r.Header.Get("Cf-Connecting-Ip"),
+				"protocol", r.Proto,
+				"method", r.Method,
+				"URI", r.URL.RequestURI(),
+			)
+		} else {
+			app.Logger.Info("request",
+				"remoteAddr", r.RemoteAddr,
+				"realIP", r.Header.Get("Cf-Connecting-Ip"),
+				"protocol", r.Proto,
+				"method", r.Method,
+				"URI", r.URL.RequestURI(),
+			)
+		}
 
 		next.ServeHTTP(w, r)
 	})
