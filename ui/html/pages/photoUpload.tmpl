@@ -48,7 +48,7 @@
         if (posterr == null) {
             var f = htmx.find('#form')
             const newDiv = document.createElement("div");
-            const text = document.createTextNode('Server Error');
+            const text = document.createTextNode('Server Error. Code: ' + e.detail.xhr.status);
             newDiv.appendChild(text)
             newDiv.id = 'postErr'
             newDiv.style.display = 'inline'

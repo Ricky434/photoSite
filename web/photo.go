@@ -157,6 +157,9 @@ func (app *Application) renderPhotosUploadErrors(w http.ResponseWriter, r *http.
 }
 
 func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) {
+	// This panics if the request id is not present in the context
+	requestId := r.Context().Value(requestIdContextKey).(uuid.UUID)
+
 	var form photoUploadForm
 
 	err := r.ParseMultipartForm(32 << 20) // 32MB
@@ -321,6 +324,13 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 				return
 			}
 
+			app.Logger.Warn("photo ignored",
+				"requestId", requestId,
+				"filename", photo.FileName,
+				"eventID", event.ID,
+				"error", err.Error(),
+			)
+
 			continue
 		}
 
@@ -352,11 +362,20 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 			app.serverError(w, r, err)
 			return
 		}
+
+		app.Logger.Info("photo uploaded",
+			"requestId", requestId,
+			"filename", photo.FileName,
+			"photoID", photo.ID,
+			"eventID", event.ID,
+		)
 	}
 
 	// If non fatal errors happened, inform client
 	if !form.Valid() {
-		form.AddNonFieldError("All other files have been uploaded")
+		if len(form.NonFieldErrors) < len(files) {
+			form.AddNonFieldError("All other files have been uploaded")
+		}
 		app.renderPhotosUploadErrors(w, r, form)
 		return
 	}
@@ -367,6 +386,9 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 }
 
 func (app Application) photoDelete(w http.ResponseWriter, r *http.Request) {
+	// This panics if the request id is not present in the context
+	requestId := r.Context().Value(requestIdContextKey).(uuid.UUID)
+
 	var input struct {
 		Token  string   `json:"csrf_token"` // only needed by readJSON since it checks for unknown keys
 		Event  int      `json:"event"`
@@ -406,6 +428,11 @@ func (app Application) photoDelete(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			if errors.Is(err, models.ErrRecordNotFound) {
 				missingFiles = append(missingFiles, photo)
+				app.Logger.Warn("photo missing (deletion)",
+					"requestId", requestId,
+					"filename", photo,
+					"eventID", input.Event,
+				)
 				continue
 			}
 
@@ -424,11 +451,22 @@ func (app Application) photoDelete(w http.ResponseWriter, r *http.Request) {
 			app.serverError(w, r, err)
 			//return
 		}
+
+		app.Logger.Info("photo deleted",
+			"requestId", requestId,
+			"filename", photo,
+			"eventID", input.Event,
+		)
 	}
 
 	if len(missingFiles) > 0 {
+		otherFilesString := ""
+		if len(missingFiles) < len(input.Photos) {
+			otherFilesString = "\nOther files have been deleted."
+		}
+
 		app.SessionManager.Put(r.Context(), "flash",
-			fmt.Sprintf("These files do not exist: \n\t%s.\nOther files have been deleted", strings.Join(missingFiles, "\n\t")))
+			fmt.Sprintf("These files do not exist: \n\t%s.%s", strings.Join(missingFiles, "\n\t"), otherFilesString))
 	} else {
 		app.SessionManager.Put(r.Context(), "flash", "Files deleted successfully")
 	}

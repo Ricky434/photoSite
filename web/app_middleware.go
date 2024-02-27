@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/justinas/nosurf"
 )
 
@@ -35,24 +36,18 @@ func (app *Application) staticCacheHeaders(next http.Handler) http.Handler {
 
 func (app *Application) logRequest(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get("Cf-Ipcountry") != "IT" {
-			app.Logger.Warn("request",
-				"remoteAddr", r.RemoteAddr,
-				"Country", r.Header.Get("Cf-Ipcountry"),
-				"realIP", r.Header.Get("Cf-Connecting-Ip"),
-				"protocol", r.Proto,
-				"method", r.Method,
-				"URI", r.URL.RequestURI(),
-			)
-		} else {
-			app.Logger.Info("request",
-				"remoteAddr", r.RemoteAddr,
-				"realIP", r.Header.Get("Cf-Connecting-Ip"),
-				"protocol", r.Proto,
-				"method", r.Method,
-				"URI", r.URL.RequestURI(),
-			)
-		}
+		requestId := uuid.New()
+		ctx := context.WithValue(r.Context(), requestIdContextKey, requestId)
+		r = r.WithContext(ctx)
+
+		app.Logger.Info("request",
+			"requestId", requestId,
+			"remoteAddr", r.RemoteAddr,
+			"realIP", r.Header.Get("X-Real-Ip"),
+			"protocol", r.Proto,
+			"method", r.Method,
+			"URI", r.URL.RequestURI(),
+		)
 
 		next.ServeHTTP(w, r)
 	})

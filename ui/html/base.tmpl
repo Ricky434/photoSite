@@ -20,7 +20,7 @@
         <main>
             <!-- Display the flash message if one exists -->
             {{with .Flash}}
-                <div class='flash'>{{.}}</div>
+                <div class='flash' style='white-space: pre-wrap'>{{.}}</div>
             {{end}}
             {{template "main" .}}
         </main>

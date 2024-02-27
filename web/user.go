@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"sitoWow/internal/data/models"
 	"sitoWow/internal/validator"
+
+	"github.com/google/uuid"
 )
 
 type userCreateForm struct {
@@ -88,6 +90,9 @@ func (app *Application) userLoginPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) userLoginPost(w http.ResponseWriter, r *http.Request) {
+	// This panics if the request id is not present in the context
+	requestId := r.Context().Value(requestIdContextKey).(uuid.UUID)
+
 	var form userLoginForm
 
 	err := app.decodePostForm(r, &form)
@@ -96,7 +101,7 @@ func (app *Application) userLoginPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	form.CheckField(validator.NotBlank(form.Password), "name", "This field cannot be blank")
+	form.CheckField(validator.NotBlank(form.Name), "name", "This field cannot be blank")
 	form.CheckField(validator.NotBlank(form.Password), "password", "This field cannot be blank")
 
 	if !form.Valid() {
@@ -109,6 +114,11 @@ func (app *Application) userLoginPost(w http.ResponseWriter, r *http.Request) {
 	id, err := app.Models.Users.Authenticate(form.Name, form.Password)
 	if err != nil {
 		if errors.Is(err, models.ErrInvalidCredentials) {
+			app.Logger.Warn("login failed",
+				"requestId", requestId,
+				"name", form.Name,
+			)
+
 			form.AddNonFieldError("Name or password is incorrect")
 
 			data := app.newTemplateData(r)
@@ -127,18 +137,32 @@ func (app *Application) userLoginPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	app.SessionManager.Put(r.Context(), "authenticatedUserID", id)
+
+	app.Logger.Info("login successful",
+		"requestId", requestId,
+		"userId", id,
+	)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func (app *Application) userLogout(w http.ResponseWriter, r *http.Request) {
+	// This panics if the request id is not present in the context
+	requestId := r.Context().Value(requestIdContextKey).(uuid.UUID)
+
 	err := app.SessionManager.RenewToken(r.Context())
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
 
+	id := app.SessionManager.Get(r.Context(), "authenticatedUserID")
 	app.SessionManager.Remove(r.Context(), "authenticatedUserID")
 
 	app.SessionManager.Put(r.Context(), "flash", "You've been logged out successfully!")
+
+	app.Logger.Info("logout successful",
+		"requestId", requestId,
+		"userId", id,
+	)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
