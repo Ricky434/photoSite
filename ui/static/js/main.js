@@ -41,7 +41,7 @@ var selected = []
 
 function toggleSelected(e) {
     var img_src = e.getAttribute('src').split("/"); 
-    var file = img_src[img_src.length-1];
+    var file = decodeURI(img_src[img_src.length-1]);
 
     var delButton = document.getElementById("delButton");
     var downloadButton = document.getElementById("downloadButton");
