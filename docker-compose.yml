@@ -22,6 +22,7 @@ services:
     volumes:
       - ./storage:/data/storage
       - ./tls:/usr/src/app/tls
+      - ./ui:/usr/src/app/ui
     ports:
       - "4000:4000"
     depends_on:
