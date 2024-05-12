@@ -238,6 +238,11 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	for _, file := range files {
+		app.Logger.Info("handling photo",
+			"requestId", requestId,
+			"filename", file.Filename,
+			"eventID", event.ID,
+		)
 		var isVideo bool
 
 		if slices.Contains(models.VideoExtensions, strings.ToLower(path.Ext(file.Filename))) {
@@ -298,8 +303,17 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 		err = json.Unmarshal(stdout, &ExiftoolOut)
 		if err != nil {
 			os.Remove(newFilePath)
-			app.serverError(w, r, err)
-			return
+			form.AddNonFieldError(fmt.Sprintf("This file has invalid latitude, longitude or takenat time: %s", file.Filename))
+
+			app.Logger.Warn("photo ignored",
+				"requestId", requestId,
+				"filename", file.Filename,
+				"eventID", event.ID,
+				"exif-output", stdout,
+				"error", err.Error(),
+			)
+
+			continue
 		}
 
 		// Insert file data in db
