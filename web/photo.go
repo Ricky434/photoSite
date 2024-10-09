@@ -349,6 +349,12 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 		}
 
 		// Make thumbnail
+		app.Logger.Info("Making thumbnail",
+			"requestId", requestId,
+			"filename", file.Filename,
+			"eventID", event.ID,
+			"isVideo", isVideo,
+		)
 		var magickCmd *exec.Cmd
 		if !isVideo {
 			magickCmd = exec.Command(
@@ -368,12 +374,13 @@ func (app *Application) photoUploadPost(w http.ResponseWriter, r *http.Request) 
 			)
 		}
 
-		_, err = magickCmd.Output()
+		output, err := magickCmd.CombinedOutput()
 		if err != nil {
+			errorMsg := fmt.Sprintf("Imagemagick error: %s. Output: %s", err.Error(), output)
 			// Rollback
 			app.Models.Photos.Delete(photo.ID)
 			os.Remove(destination.Name())
-			app.serverError(w, r, err)
+			app.serverError(w, r, errors.New(errorMsg))
 			return
 		}
 

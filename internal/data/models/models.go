@@ -25,11 +25,14 @@ var (
 		".png",
 		".svg",
 		".webp",
+		//".heic", // Not supported by imagemagick used in current docker image
 	}
 
 	VideoExtensions = []string{
 		".mp4",
 		".mkv",
+		".webm",
+		".mov",
 	}
 )
 
