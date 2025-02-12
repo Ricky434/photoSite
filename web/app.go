@@ -25,10 +25,11 @@ type Config struct {
 	StaticDir  string
 	StorageDir string
 	DB         struct {
-		Dsn          string
-		MaxOpenConns int
-		MaxIdleConns int
-		MaxIdleTime  string
+		Dsn           string
+		MigrationsDir string
+		MaxOpenConns  int
+		MaxIdleConns  int
+		MaxIdleTime   string
 	}
 }
 

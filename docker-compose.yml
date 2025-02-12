@@ -12,17 +12,11 @@ services:
         - ADMIN_PASSWORD
     image: jelly/sito-wow
     container_name: sitoWow
-    environment:
-      - DB_USER=postgres
-      - DB_PASSWORD=$DB_PASSWORD
-      - DB_NAME=sitoWow
-      - DB_HOST=db
-      - PORT=4000
     restart: unless-stopped
     volumes:
       - ./storage:/data/storage
-      - ./tls:/usr/src/app/tls
-      - ./ui:/usr/src/app/ui
+      - ./tls:/app/tls
+      - ./ui/static:/app/static # Not really needed
     ports:
       - "4000:4000"
     depends_on:
